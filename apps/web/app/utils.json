@@ -1,0 +1,4 @@
+{
+  "backend_url": "http://localhost:5000",
+  "WS_URL": "ws://localhost:5001/"
+}
