@@ -8,6 +8,7 @@ wss.on("connection", (ws) => {
 
   ws.on("message", (msg) => {
     console.log("Message:", msg.toString());
-    ws.send("Message received on WS server!");
+    if(msg.toString() == "ping") ws.send("pong");
+    // ws.send("Message received on WS server!");
   });
 });
