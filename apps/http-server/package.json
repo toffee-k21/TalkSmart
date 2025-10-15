@@ -1,14 +1,13 @@
 {
-  "name": "backend",
+  "name": "http-server",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-  "build": "tsc",
-  "start": "node dist/index.js",
-  "dev": "tsc && nodemon dist/index.js"
-},
-
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc && nodemon dist/index.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -19,6 +18,7 @@
     "@types/express": "^5.0.3",
     "nodemon": "^3.1.10",
     "typescript": "^5.9.3",
-    "@repo/typescript-config": "workspace:*"
+    "@repo/typescript-config": "workspace:*",
+    "@repo/db": "workspace:*"
   }
 }
