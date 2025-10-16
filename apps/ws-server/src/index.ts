@@ -1,12 +1,11 @@
-// src/wsServer.ts
-import { WebSocketServer } from "ws";
+import { WebSocketServer, WebSocket } from "ws";
 import jwt from "jsonwebtoken";
 import {JWT_SECRET} from "@repo/common-backend/config";
 
 const wss = new WebSocketServer({ port: 5001 });
 
 interface User {
-  userId: String,
+  userId: string,
   ws: WebSocket,
   available: boolean
 }
@@ -23,9 +22,8 @@ function authenticateUser(url:string){
     if(!id){
       wss.close();
     }
-    // const user =  await prisma.user.findUnique({ where: { id } }); //to-do : resolve it ! if user is deleted but if token is there for user then the user can access even if he/she is removed from db
+
     return id;
-    // else wss.close()
   }
     catch(e){
       console.log(e);
@@ -35,7 +33,6 @@ function authenticateUser(url:string){
 
 let users: User[] = [];
 
-
 wss.on("connection", (ws, request) => {
   let userId = null;
   const url = request.url;
@@ -44,11 +41,37 @@ wss.on("connection", (ws, request) => {
     return;
   }
   userId =  authenticateUser(url);
+  if(!userId) return;
+  users.push({userId, ws, available: true});
   // console.log("WS client connected on port 5001");
 
   ws.on("message", (msg) => {
-    console.log("Message:", msg.toString());
-    if(msg.toString() == "ping") ws.send("pong");
-    // ws.send("Message received on WS server!");
+
+    // parsedData = {
+    //   type
+    //   details
+    //   msg
+    // }
+
+    let parsedData;
+      
+      parsedData = JSON.parse(msg.toString());
+      switch(parsedData.type){
+        case "switch-availability" :{
+           const user = users.find(u => u.ws == ws);
+           user!.available = !user?.available;
+           ws.send("switched-availibilty");
+           break;
+        }
+        case "request-call" :{
+          const toUserId = parsedData.userId;
+          const user = users.find(u => u.userId == toUserId);
+          user!.ws.send(JSON.stringify({type:"notification", details:userId, msg:`calling  request from ${userId}`}));
+          break;
+        }
+        case "answer-request":{
+
+        }
+      }
   });
 });
