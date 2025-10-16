@@ -1,6 +1,7 @@
 import { WebSocketServer, WebSocket } from "ws";
 import jwt from "jsonwebtoken";
 import {JWT_SECRET} from "@repo/common-backend/config";
+import { v4 as uuidv4 } from 'uuid';
 
 const wss = new WebSocketServer({ port: 5001 });
 
@@ -8,6 +9,17 @@ interface User {
   userId: string,
   ws: WebSocket,
   available: boolean
+}
+
+interface Room {
+  roomId: string,
+  participants: string[]
+}
+
+interface parsedData {
+  type : string,
+  participants : string[],
+  details: string
 }
 
 function authenticateUser(url:string){
@@ -32,6 +44,7 @@ function authenticateUser(url:string){
 }
 
 let users: User[] = [];
+let rooms: Room[] = [];
 
 wss.on("connection", (ws, request) => {
   let userId = null;
@@ -47,13 +60,7 @@ wss.on("connection", (ws, request) => {
 
   ws.on("message", (msg) => {
 
-    // parsedData = {
-    //   type
-    //   details
-    //   msg
-    // }
-
-    let parsedData;
+    let parsedData:parsedData;
       
       parsedData = JSON.parse(msg.toString());
       switch(parsedData.type){
@@ -64,14 +71,29 @@ wss.on("connection", (ws, request) => {
            break;
         }
         case "request-call" :{
-          const toUserId = parsedData.userId;
+          const toUserId = parsedData.participants[0]; // details directly contains userId
           const user = users.find(u => u.userId == toUserId);
           user!.ws.send(JSON.stringify({type:"notification", details:userId, msg:`calling  request from ${userId}`}));
           break;
         }
-        case "answer-request":{
+        case "join-calling":{
+          let participants = parsedData.participants;//expected: participants = ["a", "b"]
+          const roomId = uuidv4();
+          rooms.push({
+            roomId:roomId,
+            participants : [...participants] // i want to push multiple in this array
+          })
+          const usersAtCall:User[] = users.filter(u => participants.includes(u.userId));
+          usersAtCall.forEach(u => u.ws.send(JSON.stringify({
+            type:"joined-room",
+            details: roomId,
+            participants: [...participants]
+          })));
 
+          
         }
       }
   });
 });
+
+// room -> list of rooms with id and partcipation name , etc
