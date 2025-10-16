@@ -2,6 +2,6 @@ export const signinHandler = ( ) => {
 
 }
 
-export const signupHandler = () => {
-    
+export const signupHandler = ( ) => {
+
 }
