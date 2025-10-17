@@ -20,6 +20,7 @@ interface parsedData {
   type : string,
   participants : string[],
   details: string
+  sdp?: string
 }
 
 function authenticateUser(url:string){
@@ -73,6 +74,7 @@ wss.on("connection", (ws, request) => {
         case "request-call" :{
           const toUserId = parsedData.participants[0]; // details directly contains userId
           const user = users.find(u => u.userId == toUserId);
+          if(!user?.available)return;
           user!.ws.send(JSON.stringify({type:"notification", details:userId, msg:`calling  request from ${userId}`}));
           break;
         }
@@ -89,8 +91,28 @@ wss.on("connection", (ws, request) => {
             details: roomId,
             participants: [...participants]
           })));
-
-          
+        }
+        case "createOffer": {
+          const room = rooms.find(r => r.roomId === parsedData.details);
+          const receiverId = room?.participants.find(p => p !== userId);
+          const receiver = users.find(u => u.userId === receiverId);
+          receiver?.ws.send(JSON.stringify({
+            type: "createOffer",
+            sdp: parsedData.sdp
+          }));
+          break;
+          //availabilty set false
+        }
+        case "createAnswer": {
+          const room = rooms.find(r => r.roomId === parsedData.details);
+          const callerId = room?.participants.find(p => p !== userId);
+          const caller = users.find(u => u.userId === callerId);
+          caller?.ws.send(JSON.stringify({
+            type: "createAnswer",
+            sdp: parsedData.sdp
+          }));
+          break;
+          //availabilty set false
         }
       }
   });
