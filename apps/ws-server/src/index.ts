@@ -20,7 +20,8 @@ interface parsedData {
   type : string,
   participants : string[],
   details: string
-  sdp?: string
+  sdp?: string,
+  candidate?: string;
 }
 
 function authenticateUser(url:string){
@@ -93,7 +94,7 @@ wss.on("connection", (ws, request) => {
           })));
         }
         case "createOffer": {
-          const room = rooms.find(r => r.roomId === parsedData.details);
+          const room = rooms.find(r => r.roomId === parsedData.details);// details="roomId"
           const receiverId = room?.participants.find(p => p !== userId);
           const receiver = users.find(u => u.userId === receiverId);
           receiver?.ws.send(JSON.stringify({
@@ -113,6 +114,13 @@ wss.on("connection", (ws, request) => {
           }));
           break;
           //availabilty set false
+        }
+        case "iceCandidate" : {
+          const room = rooms.find(r => r.roomId === parsedData.details);// details="roomId"
+          const receiverId = room?.participants.find(p => p !== userId);
+          const receiver = users.find(u => u.userId === receiverId);
+          const target = parsedData.participants;
+          receiver?.ws?.send(JSON.stringify({ type: 'iceCandidate', candidate: parsedData.candidate }));
         }
       }
   });
