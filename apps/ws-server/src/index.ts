@@ -76,11 +76,12 @@ wss.on("connection", (ws, request) => {
           const toUserId = parsedData.participants[0]; // details directly contains userId
           const user = users.find(u => u.userId == toUserId);
           if(!user?.available)return;
-          user!.ws.send(JSON.stringify({type:"notification", details:userId, msg:`calling  request from ${userId}`}));
+          user!.ws.send(JSON.stringify({type:"request-call", details:userId, msg:`calling  request from ${userId}`}));
           break;
         }
-        case "join-calling":{
-          let participants = parsedData.participants;//expected: participants = ["a", "b"]
+        case "accept-request":{
+          parsedData.participants.push(userId); // parsedData.participants = ['a'];
+          let participants = parsedData.participants;//expected: participants = ["a","uid"]
           const roomId = uuidv4();
           rooms.push({
             roomId:roomId,
@@ -88,7 +89,7 @@ wss.on("connection", (ws, request) => {
           })
           const usersAtCall:User[] = users.filter(u => participants.includes(u.userId));
           usersAtCall.forEach(u => u.ws.send(JSON.stringify({
-            type:"joined-room",
+            type:"join-room",
             details: roomId,
             participants: [...participants]
           })));
