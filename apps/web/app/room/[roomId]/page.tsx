@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useSocket } from "../../context/SocketContext";
 
 /**
  * This component creates a simple WebRTC video calling app between two peers
  * using WebSockets as a signaling server.
  */
-const App = ({ role }: any) => {
+const Room = ({ role }: any) => {
     // Role of the user: either "sender" or "receiver"
     // const [role, setRole] = useState<"sender" | "receiver" | null>(null);
 
@@ -29,8 +30,11 @@ const App = ({ role }: any) => {
         // setRole(selectedRole);
 
         // Connect to the signaling server (backend WebSocket)
-        const ws = new WebSocket("ws://localhost:8080");
-        wsRef.current = ws;
+        // const ws = new WebSocket("ws://localhost:8080");
+        // wsRef.current = socket;
+        const { socket }:any = useSocket();
+        const ws = socket;
+        wsRef.current = socket;
 
         // Once the WebSocket connects
         ws.onopen = () => {
@@ -41,7 +45,7 @@ const App = ({ role }: any) => {
         };
 
         // Handle incoming WebSocket messages (signaling data)
-        ws.onmessage = async (event) => {
+        ws.onmessage = async (event:any) => {
             const message = JSON.parse(event.data);
             console.log("Received:", message);
 
@@ -192,4 +196,4 @@ const App = ({ role }: any) => {
     );
 };
 
-export default App;
+export default Room;
