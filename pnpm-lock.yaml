@@ -121,11 +121,10 @@ importers:
         version: link:../typescript-config
 
   packages/db:
-    dependencies:
+    devDependencies:
       '@prisma/client':
         specifier: ^6.17.1
         version: 6.17.1(prisma@6.17.1(typescript@5.9.3))(typescript@5.9.3)
-    devDependencies:
       prisma:
         specifier: ^6.17.1
         version: 6.17.1(typescript@5.9.3)
