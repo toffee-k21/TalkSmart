@@ -23,7 +23,13 @@ importers:
       express:
         specifier: ^5.1.0
         version: 5.1.0
+      jsonwebtoken:
+        specifier: ^9.0.2
+        version: 9.0.2
     devDependencies:
+      '@repo/common-backend':
+        specifier: workspace:*
+        version: link:../../packages/common-backend
       '@repo/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -33,6 +39,9 @@ importers:
       '@types/express':
         specifier: ^5.0.3
         version: 5.0.3
+      '@types/jsonwebtoken':
+        specifier: ^9.0.10
+        version: 9.0.10
       nodemon:
         specifier: ^3.1.10
         version: 3.1.10
