@@ -1,6 +1,7 @@
 import express, { Request, Response } from "express";
 import userRouter from "./route/auth";
 import cors from 'cors';
+import { listUserHandler } from "./controllers/users";
 
 const app = express();
 const PORT = 5000;
@@ -16,6 +17,7 @@ app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use("/auth", userRouter);
+app.use("/users", listUserHandler); // add middleware
 app.get("/", (req: Request, res: Response) => {
   res.send("Hello TypeScript + Express 🚀");
 });
