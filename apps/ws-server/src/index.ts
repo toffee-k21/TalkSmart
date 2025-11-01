@@ -58,23 +58,7 @@ wss.on("connection", (ws, request) => {
   }
   userId =  authenticateUser(url);
   if(!userId) return;
-  // users.push({userId, ws, available: true});
-  // update : fix no duplicate connection remains
-    // 🧠 Check for existing user
-  const existingUserIndex = users.findIndex(u => u.userId === userId);
-
-  if (existingUserIndex !== -1) {
-    // Close old connection (optional)
-    try {
-      users[existingUserIndex]!.ws.close(1000, "New session opened");
-    } catch {}
-
-    // Replace old entry
-    users[existingUserIndex] = { userId, ws, available: true };
-  } else {
-    // Add new user
-    users.push({ userId, ws, available: true });
-  }
+  users.push({userId, ws, available: true});
 
   ws.on("message", (msg) => {
 
@@ -145,6 +129,30 @@ wss.on("connection", (ws, request) => {
         }
       }
   });
+  ws.on("close", () => {
+  const disconnectedUser = users.find(u => u.ws === ws);
+  if (!disconnectedUser) return;
+
+  const userId = disconnectedUser.userId;
+  console.log(`User ${userId} disconnected`);
+
+  // Remove user
+  users = users.filter(u => u.ws !== ws);
+
+  // Notify the other participant if in a room
+  const room = rooms.find(r => r.participants.includes(userId));
+  if (room) {
+    const otherUserId = room.participants.find(p => p !== userId);
+    const otherUser = users.find(u => u.userId === otherUserId);
+    if (otherUser) {
+      otherUser.ws.send(JSON.stringify({ type: "peer-disconnected" }));
+    }
+
+    // Clean up room
+    rooms = rooms.filter(r => r.roomId !== room.roomId);
+  }
+});
+
 });
 
 // room -> list of rooms with id and partcipation name , etc
