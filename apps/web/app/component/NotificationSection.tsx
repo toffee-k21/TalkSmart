@@ -3,9 +3,11 @@ import { useSocket } from '../context/SocketContext'
 import { useRouter } from 'next/navigation';
 
 const NotificationSection = () => {
-    const {socket}:any = useSocket();
+    const {socket, isConnected}: any= useSocket();
+    console.log("socket", socket);
     const [callBy, setCallBy] = useState();
     const router = useRouter();
+    if(!isConnected) return null;
     socket.onmessage = async (event:any) => {
         const message = JSON.parse(event.data);
         console.log("Received:", message);
@@ -15,7 +17,7 @@ const NotificationSection = () => {
         }
         if (message.type == "join-room"){
             const roomId = message.details;
-            router.push(`room/${roomId}`);
+            router.push(`room/${roomId}/?role=${message.role}`);
         }
     }
     const handleAcceptRequest = (callBy:string) => {

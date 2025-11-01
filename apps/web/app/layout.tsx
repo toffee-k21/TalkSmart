@@ -23,12 +23,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <SocketProvider>
-      <html lang="en">
+    <html lang="en">
         <body className={`${geistSans.variable} ${geistMono.variable}`}>
-          {children}
+          <SocketProvider>
+            {children}
+          </SocketProvider>
         </body>
       </html>
-    </SocketProvider>
   );
 }

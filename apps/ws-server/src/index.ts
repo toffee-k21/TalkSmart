@@ -8,7 +8,8 @@ const wss = new WebSocketServer({ port: 5001 });
 interface User {
   userId: string,
   ws: WebSocket,
-  available: boolean
+  available: boolean,
+  role?: string
 }
 
 interface Room {
@@ -75,8 +76,12 @@ wss.on("connection", (ws, request) => {
         case "request-call" :{
           const toUserId = parsedData.participants[0]; // details directly contains userId
           const user = users.find(u => u.userId == toUserId);
-          if(!user?.available)return;
+          // if(!user?.available)return;
+          console.log("user",user);
           user!.ws.send(JSON.stringify({type:"request-call", details:userId, msg:`calling  request from ${userId}`}));
+          user!.role = "sender"; 
+          const nativeUser = users.find(u => u.userId == userId);
+          nativeUser!.role = "receiver";
           break;
         }
         case "accept-request":{
@@ -91,13 +96,16 @@ wss.on("connection", (ws, request) => {
           usersAtCall.forEach(u => u.ws.send(JSON.stringify({
             type:"join-room",
             details: roomId,
-            participants: [...participants]
+            participants: [...participants],
+            role: u.role
           })));
         }
         case "createOffer": {
           const room = rooms.find(r => r.roomId === parsedData.details);// details="roomId"
+          console.log("details",parsedData.details)
           const receiverId = room?.participants.find(p => p !== userId);
           const receiver = users.find(u => u.userId === receiverId);
+          console.log("receiver", receiver);
           receiver?.ws.send(JSON.stringify({
             type: "createOffer",
             sdp: parsedData.sdp
@@ -120,7 +128,7 @@ wss.on("connection", (ws, request) => {
           const room = rooms.find(r => r.roomId === parsedData.details);// details="roomId"
           const receiverId = room?.participants.find(p => p !== userId);
           const receiver = users.find(u => u.userId === receiverId);
-          const target = parsedData.participants;
+          // const target = parsedData.participants;
           receiver?.ws?.send(JSON.stringify({ type: 'iceCandidate', candidate: parsedData.candidate }));
         }
       }

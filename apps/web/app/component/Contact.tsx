@@ -5,7 +5,9 @@ import {backend_url} from "../utils.json"
 
 const Contact = () => {
     const [users, setUsers]: any = useState([]);
-    const ws: any = useSocket();
+    const {socket, isConnected}: any = useSocket();
+    console.log("socket",socket);
+    if(!isConnected) return null;
 
     const handleFetchUsers = async () =>{
         const res = await fetch(`${backend_url}/users/`);
@@ -18,8 +20,8 @@ const Contact = () => {
         handleFetchUsers();
     },[]);
 
-    console.log("ws",ws); // it is comming out to be null
-    const socket = ws?.socket;
+    // console.log("ws",ws); // it is comming out to be null
+    // const socket = ws?.socket;
     const handleSendRequest = (userId: string) => {
         socket.send(JSON.stringify({ type: "request-call", participants:[userId]}));
     }
@@ -27,8 +29,8 @@ const Contact = () => {
   return (
     <div>
         {users.map((e:any)=>{
-            <div>{e.username} - {e.userId}
-                <button onClick={() => handleSendRequest(e.userId)}></button>
+           return <div>{e.username} - {e.id}
+                <button onClick={() => handleSendRequest(e.id)}>request call</button>
             </div>
         })}
     </div>
