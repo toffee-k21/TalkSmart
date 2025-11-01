@@ -58,8 +58,23 @@ wss.on("connection", (ws, request) => {
   }
   userId =  authenticateUser(url);
   if(!userId) return;
-  users.push({userId, ws, available: true});
-  // console.log("WS client connected on port 5001");
+  // users.push({userId, ws, available: true});
+  // update : fix no duplicate connection remains
+    // 🧠 Check for existing user
+  const existingUserIndex = users.findIndex(u => u.userId === userId);
+
+  if (existingUserIndex !== -1) {
+    // Close old connection (optional)
+    try {
+      users[existingUserIndex]!.ws.close(1000, "New session opened");
+    } catch {}
+
+    // Replace old entry
+    users[existingUserIndex] = { userId, ws, available: true };
+  } else {
+    // Add new user
+    users.push({ userId, ws, available: true });
+  }
 
   ws.on("message", (msg) => {
 
@@ -77,7 +92,6 @@ wss.on("connection", (ws, request) => {
           const toUserId = parsedData.participants[0]; // details directly contains userId
           const user = users.find(u => u.userId == toUserId);
           // if(!user?.available)return;
-          console.log("user",user);
           user!.ws.send(JSON.stringify({type:"request-call", details:userId, msg:`calling  request from ${userId}`}));
           user!.role = "sender"; 
           const nativeUser = users.find(u => u.userId == userId);
@@ -102,10 +116,8 @@ wss.on("connection", (ws, request) => {
         }
         case "createOffer": {
           const room = rooms.find(r => r.roomId === parsedData.details);// details="roomId"
-          console.log("details",parsedData.details)
           const receiverId = room?.participants.find(p => p !== userId);
           const receiver = users.find(u => u.userId === receiverId);
-          console.log("receiver", receiver);
           receiver?.ws.send(JSON.stringify({
             type: "createOffer",
             sdp: parsedData.sdp
