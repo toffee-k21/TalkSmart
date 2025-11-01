@@ -1,6 +1,6 @@
 'use client'
 import React, { useEffect, useRef, useState } from "react";
-import { useSocket } from "../../context/SocketContext";
+import { useSocket } from "../../../context/SocketContext";
 import { useParams, useSearchParams } from "next/navigation";
 
 /**
@@ -12,7 +12,7 @@ const Room = () => {
     // const [role, setRole] = useState<"sender" | "receiver" | null>(null);
     const searchParams = useSearchParams();
     const role: string = searchParams.get("role")!;
-    const roomId:any = useParams().roomId;
+    const roomId: any = useParams().roomId;
 
     // Indicates if the connection setup (signaling) is done
     const [connected, setConnected] = useState(false);
@@ -33,7 +33,7 @@ const Room = () => {
      */
 
     const { socket, isConnected }: any = useSocket();
-    if(!isConnected) return null;
+    if (!isConnected) return null;
     const ws = socket;
     wsRef.current = socket;
     const startConnection = async (selectedRole: string) => {
@@ -52,7 +52,7 @@ const Room = () => {
         // };
 
         // Handle incoming WebSocket messages (signaling data)
-        ws.onmessage = async (event:any) => {
+        ws.onmessage = async (event: any) => {
             const message = JSON.parse(event.data);
             console.log("Received:", message);
 
@@ -95,7 +95,7 @@ const Room = () => {
         peer.onicecandidate = (event) => {
             if (event.candidate) {
                 ws.send(
-                    JSON.stringify({ type: "iceCandidate", candidate: event.candidate, details: roomId})
+                    JSON.stringify({ type: "iceCandidate", candidate: event.candidate, details: roomId })
                 );
             }
         };
@@ -137,7 +137,7 @@ const Room = () => {
             console.log("sent create offer")
             const offer = await peer.createOffer();
             await peer.setLocalDescription(offer);
-            ws.send(JSON.stringify({ type: "createOffer", sdp: offer, details: roomId}));
+            ws.send(JSON.stringify({ type: "createOffer", sdp: offer, details: roomId }));
         }
 
         // Mark as connected in UI
@@ -155,7 +155,7 @@ const Room = () => {
         await peer.setRemoteDescription(new RTCSessionDescription(sdp));
         const answer = await peer.createAnswer();
         await peer.setLocalDescription(answer);
-        wsRef.current?.send(JSON.stringify({ type: "createAnswer", sdp: answer, details:roomId }));
+        wsRef.current?.send(JSON.stringify({ type: "createAnswer", sdp: answer, details: roomId }));
     };
 
     /**
