@@ -12,12 +12,13 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     useEffect(() => {
         const token = document.cookie.split("; ").find((row) => row.startsWith("token="))?.split("=")[1];
-
+            
         if (!token) {
             router.push("/auth");
             return;
         }
-        
+        console.log("token",token)
+
         const ws = new WebSocket(`${WS_URL}/?token=${token}`);
         ws.onopen = () => setSocket(ws);
         return () => ws.close();
