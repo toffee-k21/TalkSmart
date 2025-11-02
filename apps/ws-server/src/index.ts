@@ -210,6 +210,13 @@ wss.on("connection", (ws, request) => {
 
   const userId = disconnectedUser.userId;
   // console.log(`User ${userId} disconnected`);
+  
+  console.log(`User ${disconnectedUser.userId} went offline`);
+  disconnectedUser.isOnline = false;
+
+    // Notify others
+    broadcastUserStatus(disconnectedUser.userId, false);
+
 
   // Remove user
   users = users.filter(u => u.ws !== ws);
