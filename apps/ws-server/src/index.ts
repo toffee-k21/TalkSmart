@@ -25,6 +25,15 @@ interface parsedData {
   candidate?: string;
 }
 
+interface PendingMessage {
+  type: string;
+  sdp?: any;
+  candidate?: any;
+  from: string;
+}
+
+let pendingMessages: Record<string, PendingMessage[]> = {}; // key = userId
+
 function authenticateUser(url:string){
   try {
     const queryParam = new URLSearchParams(url?.split('?')[1]);
@@ -61,7 +70,6 @@ wss.on("connection", (ws, request) => {
   users.push({userId, ws, available: true});
 
   ws.on("message", (msg) => {
-
     let parsedData:parsedData;
       
       parsedData = JSON.parse(msg.toString());
@@ -98,14 +106,39 @@ wss.on("connection", (ws, request) => {
             role: u.role
           })));
         }
+        case "startMeeting": {
+          const user = users.find(u => u.ws === ws);
+          if (!user) return;
+
+          // Send pending messages only now
+          if (pendingMessages[user.userId] && pendingMessages[user.userId]!.length > 0) {
+            console.log(`Delivering ${pendingMessages[user.userId]!.length} pending messages to ${user.userId}`);
+            pendingMessages[user.userId]!.forEach(msg =>
+              ws.send(JSON.stringify(msg))
+            );
+            delete pendingMessages[user.userId]; // Clear them after sending
+          }
+          break;
+        }
         case "createOffer": {
           const room = rooms.find(r => r.roomId === parsedData.details);// details="roomId"
           const receiverId = room?.participants.find(p => p !== userId);
           const receiver = users.find(u => u.userId === receiverId);
-          receiver?.ws.send(JSON.stringify({
+
+          const message = {
             type: "createOffer",
-            sdp: parsedData.sdp
-          }));
+            sdp: parsedData.sdp,
+            from: userId
+          };
+
+          if (receiver) {
+            receiver.ws.send(JSON.stringify(message));
+          } else {
+            // Receiver not connected yet → store the message
+            if (!pendingMessages[receiverId!]) pendingMessages[receiverId!] = [];
+            pendingMessages[receiverId!]!.push(message);
+            console.log(`Stored pending offer for ${receiverId}`);
+          }
           break;
           //availabilty set false
         }
@@ -113,10 +146,18 @@ wss.on("connection", (ws, request) => {
           const room = rooms.find(r => r.roomId === parsedData.details);
           const callerId = room?.participants.find(p => p !== userId);
           const caller = users.find(u => u.userId === callerId);
-          caller?.ws.send(JSON.stringify({
+          const message = {
             type: "createAnswer",
-            sdp: parsedData.sdp
-          }));
+            sdp: parsedData.sdp,
+            from: userId
+          };
+          if (caller) {
+            caller.ws.send(JSON.stringify(message));
+          } else {
+            if (!pendingMessages[callerId!]) pendingMessages[callerId!] = [];
+            pendingMessages[callerId!]!.push(message);
+            console.log(`Stored pending answer for ${callerId}`);
+          }
           break;
           //availabilty set false
         }

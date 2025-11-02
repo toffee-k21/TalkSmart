@@ -29,7 +29,7 @@ const Contact = () => {
   return (
     <div>
         {users.map((e:any)=>{
-           return <div>{e.username} - {e.id}
+           return <div key={e.id}>{e.username} - {e.id}
                 <button onClick={() => handleSendRequest(e.id)}>request call</button>
             </div>
         })}
