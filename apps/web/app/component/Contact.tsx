@@ -20,6 +20,21 @@ const Contact = () => {
         handleFetchUsers();
     },[]);
 
+    socket.onmessage = async (event: any) => {
+        const message = JSON.parse(event.data);
+        console.log("Received:", message);
+
+        switch (message.type) {
+            case "user-status": {
+                console.log(`${message.userId} is now ${message.isOnline ? "online" : "offline"}`);
+                break;
+            }
+            case "online-users": {
+                console.log("Currently online:", message.users);
+            }
+        }
+    };
+
     // console.log("ws",ws); // it is comming out to be null
     // const socket = ws?.socket;
     const handleSendRequest = (userId: string) => {

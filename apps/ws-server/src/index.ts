@@ -9,6 +9,7 @@ interface User {
   userId: string,
   ws: WebSocket,
   available: boolean,
+  isOnline?: boolean,
   role?: string
 }
 
@@ -58,6 +59,20 @@ function authenticateUser(url:string){
 let users: User[] = [];
 let rooms: Room[] = [];
 
+function broadcastUserStatus(userId: string, isOnline: boolean) {
+  const payload = {
+    type: "user-status",
+    userId,
+    isOnline,
+  };
+
+  users.forEach(u => {
+    if (u.isOnline && u.ws.readyState === WebSocket.OPEN) {
+      u.ws.send(JSON.stringify(payload));
+    }
+  });
+}
+
 wss.on("connection", (ws, request) => {
   let userId = null;
   const url = request.url;
@@ -67,7 +82,23 @@ wss.on("connection", (ws, request) => {
   }
   userId =  authenticateUser(url);
   if(!userId) return;
-  users.push({userId, ws, available: true});
+
+   // Check if user already exists (maybe reconnecting)
+  let existingUser = users.find(u => u.userId === userId);
+  if (existingUser) {
+    existingUser.ws = ws;
+    existingUser.isOnline = true;
+  } else {
+    users.push({ userId, ws, available: true, isOnline: true });
+  }
+  ws.send(JSON.stringify({
+    type: "online-users",
+    users: users.filter(u => u.isOnline).map(u => u.userId)
+  }));
+
+
+  // Notify everyone about the updated online list
+  broadcastUserStatus(userId, true);
 
   ws.on("message", (msg) => {
     let parsedData:parsedData;
@@ -84,7 +115,9 @@ wss.on("connection", (ws, request) => {
           const toUserId = parsedData.participants[0]; // details directly contains userId
           const user = users.find(u => u.userId == toUserId);
           // if(!user?.available)return;
-          user!.ws.send(JSON.stringify({type:"request-call", details:userId, msg:`calling  request from ${userId}`}));
+          if(!user)return;
+          if(!user.ws) return;
+          user.ws.send(JSON.stringify({type:"request-call", details:userId, msg:`calling  request from ${userId}`}));
           user!.role = "sender"; 
           const nativeUser = users.find(u => u.userId == userId);
           nativeUser!.role = "receiver";
@@ -135,6 +168,7 @@ wss.on("connection", (ws, request) => {
             receiver.ws.send(JSON.stringify(message));
           } else {
             // Receiver not connected yet → store the message
+            if(!receiverId) console.log("no receiver id", receiverId);
             if (!pendingMessages[receiverId!]) pendingMessages[receiverId!] = [];
             pendingMessages[receiverId!]!.push(message);
             console.log(`Stored pending offer for ${receiverId}`);
@@ -175,7 +209,7 @@ wss.on("connection", (ws, request) => {
   if (!disconnectedUser) return;
 
   const userId = disconnectedUser.userId;
-  console.log(`User ${userId} disconnected`);
+  // console.log(`User ${userId} disconnected`);
 
   // Remove user
   users = users.filter(u => u.ws !== ws);
