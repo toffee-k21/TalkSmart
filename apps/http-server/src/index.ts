@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import cors from 'cors';
 import { listUserHandler } from "./controllers/users";
 import authRouter from "./route/auth";
+import cookieParser from "cookie-parser";
 
 const app = express();
 const PORT = 5000;
@@ -13,9 +14,10 @@ const corsOptions = {
   credentials: true,
 };
 
+app.use(express.json());
+app.use(cookieParser());
 app.use(cors(corsOptions));
 
-app.use(express.json());
 app.use("/auth", authRouter);
 app.use("/users", listUserHandler); // add middleware
 app.get("/", (req: Request, res: Response) => {
