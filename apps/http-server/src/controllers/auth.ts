@@ -6,8 +6,11 @@ import jwt from "jsonwebtoken";
 export const signinHandler = async (req:Request, res:Response) => {
     let user;
     try {
-        user = await prisma.user.findOne({
-            data: req.body,
+        user = await prisma.user.findFirst({
+            where: {
+                email: req.body.email,
+                password: req.body.password,
+            },
         });
     } catch (e) {
         res.json({ error: 'user does not exists', e });

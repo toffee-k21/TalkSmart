@@ -50,7 +50,7 @@ const AuthForm = () => {
         const token = await res.json();
         console.log(token);
         document.cookie = `token=${token}; path=/; max-age=86400; secure; samesite=strict`;
-        router.push("/home");
+        router.push("/");
         // console.log('Form submitted:', formData);
     };
     return (
