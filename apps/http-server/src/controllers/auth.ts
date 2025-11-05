@@ -18,7 +18,7 @@ export const signinHandler = async (req:Request, res:Response) => {
     }
     const id = user.id;
 
-    const token = jwt.sign(id, JWT_SECRET);
+    const token = jwt.sign({id}, JWT_SECRET);
     res.json(token);
 }
 
@@ -34,6 +34,18 @@ export const signupHandler = async (req:Request, res:Response) => {
     }
     const id = user.id;
 
-    const token = jwt.sign(id, JWT_SECRET);
+    const token = jwt.sign({id}, JWT_SECRET);
     res.json(token);
 }
+
+export const VerifyToken = (req: Request, res:Response) => {
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ valid: false });
+
+  try {
+    jwt.verify(token, JWT_SECRET);
+    return res.json({ valid: true });
+  } catch {
+    return res.status(401).json({ valid: false });
+  }
+};

@@ -1,9 +1,10 @@
 import express, { Router } from 'express';
-import { signinHandler, signupHandler } from '../controllers/auth';
+import { signinHandler, signupHandler, VerifyToken } from '../controllers/auth';
 
-const userRouter: Router = express.Router();
+const authRouter: Router = express.Router();
 
-userRouter.post('/signup', signupHandler);
-userRouter.post('/signin', signinHandler);
+authRouter.post('/signup', signupHandler);
+authRouter.post('/signin', signinHandler);
+authRouter.get("/verifyToken", VerifyToken);
 
-export default userRouter;
+export default authRouter;
