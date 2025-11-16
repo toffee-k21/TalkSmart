@@ -27,17 +27,17 @@ const Contact = () => {
 
         switch (message.type) {
             case "user-status": {
-                console.log(`${message.userId.id} is now ${message.isOnline ? "online" : "offline"}`);
+                console.log(`${message.userId} is now ${message.isOnline ? "online" : "offline"}`);
                 setOnlineUsers(prev => {
                     if (message.isOnline) {
                         // Add user if not already in list
-                        if (!prev.includes(message.userId.id)) {
-                            return [...prev, message.userId.id];
+                        if (!prev.includes(message.userId)) {
+                            return [...prev, message.userId];
                         }
                     return prev;
                     } else {
                         // Remove user if they went offline
-                        return prev.filter(id => id !== message.userId.id);
+                        return prev.filter(id => id !== message.userId);
                     }
                 });
 
