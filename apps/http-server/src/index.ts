@@ -14,9 +14,9 @@ const corsOptions = {
   credentials: true,
 };
 
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors(corsOptions));
 
 app.use("/auth", authRouter);
 app.use("/users", listUserHandler); // add middleware
