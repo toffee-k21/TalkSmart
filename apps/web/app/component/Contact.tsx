@@ -23,7 +23,7 @@ const Contact = () => {
 
     socket.onmessage = async (event: any) => {
         const message = JSON.parse(event.data);
-        console.log("Received:", message);
+        // console.log("Received:", message);
 
         switch (message.type) {
             case "user-status": {
@@ -37,7 +37,7 @@ const Contact = () => {
                     return prev;
                     } else {
                         // Remove user if they went offline
-                        return prev.filter(id => id !== message.userId);
+                        return prev.filter(id => id !== message.userId.id);
                     }
                 });
 
@@ -49,6 +49,7 @@ const Contact = () => {
             }
         }
     };
+    console.log("ou",onlineUsers);
 
     // console.log("ws",ws); // it is comming out to be null
     // const socket = ws?.socket;
