@@ -1,0 +1,11 @@
+used 
+
+signaling:discover
+
+signal:nodeId (hash map)
+
+pending:userId (List)
+
+user:nodes (hash map)
+
+rooms: roomid (hash map)

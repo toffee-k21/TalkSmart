@@ -1,10 +1,12 @@
 import { v4 as uuid } from "uuid";
 import { redis } from "../config/redis";
 
-export async function createRoom(participants: string[]) {
+export async function createRoom(callerId: string, receiverId: string) {
   const roomId = uuid();
-  await redis.hSet("rooms", roomId, JSON.stringify({ roomId, participants }));
-  return { roomId, participants };
+  const room = { roomId, callerId, receiverId };
+
+  await redis.hSet("rooms", roomId, JSON.stringify(room));
+  return room;
 }
 
 export async function getRoom(roomId: string) {
@@ -14,10 +16,12 @@ export async function getRoom(roomId: string) {
 
 export async function getRoomByUser(userId: string) {
   const all = await redis.hGetAll("rooms");
-  for (let r of Object.values(all)) {
+
+  for (const r of Object.values(all)) {
     const room = JSON.parse(r);
-    if (room.participants.includes(userId)) return room;
+    if (room.callerId === userId || room.receiverId === userId) return room;
   }
+
   return null;
 }
 

@@ -28,7 +28,7 @@ const Room = () => {
         console.log("Starting meeting as:", selectedRole);
 
         // Notify backend that meeting started
-        ws.send(JSON.stringify({ type: "startMeeting", details: roomId }));
+        // ws.send(JSON.stringify({ type: "startMeeting", details: roomId }));
 
         // Create peer connection
         const peer = new RTCPeerConnection({

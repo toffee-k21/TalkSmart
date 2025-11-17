@@ -4,94 +4,97 @@ import { storePending } from "../services/pendingService";
 import { getUserNode } from "../services/userService";
 
 export async function handleMessage(ws:any, userId:any, parsed:any) {
+    console.log(parsed);
   switch (parsed.type) {
 
     case "request-call": {
-      const targetUserId = parsed.participants[0];
+  const { callerId, receiverId } = parsed;
 
-      const targetNode = await getUserNode(targetUserId);
+  const node = await getUserNode(receiverId);
 
-      const message = {
-        type: "request-call",
-        from: userId,
-        to: targetUserId
-      };
+  const msg = {
+    type: "request-call",
+    callerId,
+    receiverId,
+    to: receiverId
+  };
 
-      if (!targetNode) {
-        await storePending(targetUserId, message);
-        return;
-      }
+  if (!node) {
+    return storePending(receiverId, msg);
+  }
 
-      await pub.publish(`signal:${targetNode}`, JSON.stringify(message));
-      break;
-    }
+  await pub.publish(`signal:${node}`, JSON.stringify(msg));
+  break;
+}
+
 
     case "accept-request": {
-      parsed.participants.push(userId);
-      const room = await createRoom(parsed.participants);
+  const { callerId, receiverId } = parsed;
 
-      for (const pid of parsed.participants) {
-        const targetNode = await getUserNode(pid);
+  const room = await createRoom(callerId, receiverId);
 
-        await pub.publish(`signal:${targetNode}`, JSON.stringify({
-          type: "join-room",
-          roomId: room.roomId,
-          participants: parsed.participants
-        }));
-      }
-      break;
-    }
+  // Notify caller
+  const callerNode = await getUserNode(callerId);
+  await pub.publish(`signal:${callerNode}`, JSON.stringify({
+    type: "join-room",
+    roomId: room.roomId,
+    callerId,
+    receiverId,
+    to: callerId
+  }));
+
+  // Notify receiver
+  const receiverNode = await getUserNode(receiverId);
+  await pub.publish(`signal:${receiverNode}`, JSON.stringify({
+    type: "join-room",
+    roomId: room.roomId,
+    callerId,
+    receiverId,
+    to: receiverId
+  }));
+
+  break;
+}
+
 
     case "createOffer": {
-      const room = await getRoom(parsed.details);
-      const targetUserId = room.participants.find((p:any) => p !== userId);
-      const targetNode = await getUserNode(targetUserId);
+  const { roomId, from, to, sdp } = parsed;
 
-      const msg = {
-        type: "createOffer",
-        sdp: parsed.sdp,
-        from: userId,
-        to: targetUserId
-      };
+  const node = await getUserNode(to);
 
-      if (!targetNode) return storePending(targetUserId, msg);
+  const msg = { type: "createOffer", roomId, from, to, sdp };
 
-      await pub.publish(`signal:${targetNode}`, JSON.stringify(msg));
-      break;
-    }
+  if (!node) return storePending(to, msg);
+
+  await pub.publish(`signal:${node}`, JSON.stringify(msg));
+  break;
+}
+
 
     case "createAnswer": {
-      const room = await getRoom(parsed.details);
-      const targetUserId = room.participants.find((p:any) => p !== userId);
-      const targetNode = await getUserNode(targetUserId);
+  const { roomId, from, to, sdp } = parsed;
 
-      const msg = {
-        type: "createAnswer",
-        sdp: parsed.sdp,
-        from: userId,
-        to: targetUserId
-      };
+  const node = await getUserNode(to);
 
-      if (!targetNode) return storePending(targetUserId, msg);
+  const msg = { type: "createAnswer", roomId, from, to, sdp };
 
-      await pub.publish(`signal:${targetNode}`, JSON.stringify(msg));
-      break;
-    }
+  if (!node) return storePending(to, msg);
+
+  await pub.publish(`signal:${node}`, JSON.stringify(msg));
+  break;
+}
+
 
     case "iceCandidate": {
-      const room = await getRoom(parsed.details);
-      const targetUserId = room.participants.find((p:any) => p !== userId);
-      const targetNode = await getUserNode(targetUserId);
+  const { roomId, from, to, candidate } = parsed;
 
-      const msg = {
-        type: "iceCandidate",
-        candidate: parsed.candidate,
-        from: userId,
-        to: targetUserId
-      };
+  const node = await getUserNode(to);
 
-      await pub.publish(`signal:${targetNode}`, JSON.stringify(msg));
-      break;
-    }
+  const msg = { type: "iceCandidate", roomId, from, to, candidate };
+
+  await pub.publish(`signal:${node}`, JSON.stringify(msg));
+  break;
+}
+
   }
 }

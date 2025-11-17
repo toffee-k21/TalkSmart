@@ -1,13 +1,10 @@
 import { createClient, RedisClientType } from "redis";
+import dotenv from "dotenv";
+dotenv.config();
 
-export const redis: RedisClientType = createClient({
-  url: "redis://localhost:6379"
-});
+const url = process.env.REDIS_URL;
 
-export const pub: RedisClientType = createClient({
-  url: "redis://localhost:6379"
-});
-
-export const sub: RedisClientType = createClient({
-  url: "redis://localhost:6379"
-});
+export const redis: RedisClientType = createClient({ url });
+export const pub: RedisClientType = createClient({ url });
+export const subPattern: RedisClientType = createClient({ url });
+export const subGlobal: RedisClientType = createClient({ url });

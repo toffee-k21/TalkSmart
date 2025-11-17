@@ -16,10 +16,12 @@ const NotificationSection = () => {
             console.log("Received:", message)
 
             if (message.type === "request-call") {
-                alert("A request for call arrived!")
-                setCallBy(message.details)
+                alert("A request for call arrived!");
+                console.log("A request for call arrived!",message);
+                setCallBy(message.from)
             }
             if (message.type === "join-room") {
+                console.log("join room",message);
                 const roomId = message.details
                 router.push(`room/${roomId}/?role=${message.role}`)
             }
@@ -36,6 +38,7 @@ const NotificationSection = () => {
 
     const handleAcceptRequest = (callBy: string) => {
         if (!socket) return
+        console.log("clicked", callBy)
         socket.send(JSON.stringify({ type: "accept-request", participants: [callBy] }))
     }
 
