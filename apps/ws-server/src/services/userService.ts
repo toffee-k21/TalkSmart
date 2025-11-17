@@ -1,34 +1,38 @@
-import { WebSocket } from "ws";
+import { redis } from "../config/redis";
 
-export interface User {
-  userId: string;
-  ws: WebSocket;
-  available: boolean;
-  isOnline: boolean;
-  role?: string;
+export async function addOrUpdateUser(userId: string, nodeId: string) {
+  await redis.hSet("user:nodes", userId, nodeId);
+
+  await redis.hSet("users", userId, JSON.stringify({
+    userId,
+    nodeId,
+    available: true,
+    isOnline: true
+  }));
 }
 
-export let users: User[] = [];
-
-export function addOrUpdateUser(userId: string, ws: WebSocket) {
-  let user = users.find(u => u.userId === userId);
-
-  if (user) {
-    user.ws = ws;
-    user.isOnline = true;
-    return user;
-  }
-
-  const newUser: User = { userId, ws, available: true, isOnline: true };
-  users.push(newUser);
-
-  return newUser;
+export async function getUser(userId: string) {
+  const data = await redis.hGet("users", userId);
+  return data ? JSON.parse(data) : null;
 }
 
-export function getUserById(id: string) {
-  return users.find(u => u.userId === id);
+export async function getUserNode(userId: string) {
+  return await redis.hGet("user:nodes", userId);
 }
 
-export function removeUser(ws: WebSocket) {
-  users = users.filter(u => u.ws !== ws);
+export async function setUserOffline(userId: string) {
+  const usr = await getUser(userId);
+  if (!usr) return;
+
+  usr.isOnline = false;
+  await redis.hSet("users", userId, JSON.stringify(usr));
+  await redis.hDel("user:nodes", userId);
+}
+
+export async function getOnlineUsers() {
+  const all = await redis.hGetAll("users");
+  return Object.values(all)
+    .map((u: any) => JSON.parse(u))
+    .filter((u) => u.isOnline)
+    .map((u) => u.userId);
 }

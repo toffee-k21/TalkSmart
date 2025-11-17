@@ -1,89 +1,96 @@
-import { WebSocket } from "ws";
-import { getUserById, users } from "../services/userService";
-import { createRoom, getRoomById } from "../services/roomService";
+import { pub } from "../config/redis";
+import { getRoom, createRoom } from "../services/roomService";
 import { storePending } from "../services/pendingService";
+import { getUserNode } from "../services/userService";
 
-export function handleMessage(ws: WebSocket, userId: string, data: any) {
-  switch (data.type) {
-    case "switch-availability": {
-      const user = getUserById(userId);
-      if (!user) return;
-
-      user.available = !user.available;
-      ws.send("switched-availability");
-      break;
-    }
+export async function handleMessage(ws:any, userId:any, parsed:any) {
+  switch (parsed.type) {
 
     case "request-call": {
-      const toId = data.participants[0];
-      const target = getUserById(toId);
-      if (!target) return;
+      const targetUserId = parsed.participants[0];
 
-      target.ws.send(
-        JSON.stringify({
-          type: "request-call",
-          details: userId,
-          msg: `Call request from ${userId}`
-        })
-      );
+      const targetNode = await getUserNode(targetUserId);
 
-      const caller = getUserById(userId);
-      caller!.role = "sender";
-      target.role = "receiver";
+      const message = {
+        type: "request-call",
+        from: userId,
+        to: targetUserId
+      };
 
+      if (!targetNode) {
+        await storePending(targetUserId, message);
+        return;
+      }
+
+      await pub.publish(`signal:${targetNode}`, JSON.stringify(message));
       break;
     }
 
     case "accept-request": {
-      data.participants.push(userId);
+      parsed.participants.push(userId);
+      const room = await createRoom(parsed.participants);
 
-      const room = createRoom(data.participants);
+      for (const pid of parsed.participants) {
+        const targetNode = await getUserNode(pid);
 
-      users
-        .filter(u => data.participants.includes(u.userId))
-        .forEach(u =>
-          u.ws.send(
-            JSON.stringify({
-              type: "join-room",
-              details: room.roomId,
-              participants: data.participants,
-              role: u.role
-            })
-          )
-        );
+        await pub.publish(`signal:${targetNode}`, JSON.stringify({
+          type: "join-room",
+          roomId: room.roomId,
+          participants: parsed.participants
+        }));
+      }
       break;
     }
 
     case "createOffer": {
-      const room = getRoomById(data.details);
-      const receiverId = room?.participants.find(p => p !== userId);
-      const receiver = getUserById(receiverId!);
+      const room = await getRoom(parsed.details);
+      const targetUserId = room.participants.find((p:any) => p !== userId);
+      const targetNode = await getUserNode(targetUserId);
 
-      const msg = { type: "createOffer", sdp: data.sdp, from: userId };
+      const msg = {
+        type: "createOffer",
+        sdp: parsed.sdp,
+        from: userId,
+        to: targetUserId
+      };
 
-      receiver ? receiver.ws.send(JSON.stringify(msg)) : storePending(receiverId!, msg);
+      if (!targetNode) return storePending(targetUserId, msg);
+
+      await pub.publish(`signal:${targetNode}`, JSON.stringify(msg));
       break;
     }
 
     case "createAnswer": {
-      const room = getRoomById(data.details);
-      const callerId = room?.participants.find(p => p !== userId);
-      const caller = getUserById(callerId!);
+      const room = await getRoom(parsed.details);
+      const targetUserId = room.participants.find((p:any) => p !== userId);
+      const targetNode = await getUserNode(targetUserId);
 
-      const msg = { type: "createAnswer", sdp: data.sdp, from: userId };
+      const msg = {
+        type: "createAnswer",
+        sdp: parsed.sdp,
+        from: userId,
+        to: targetUserId
+      };
 
-      caller ? caller.ws.send(JSON.stringify(msg)) : storePending(callerId!, msg);
+      if (!targetNode) return storePending(targetUserId, msg);
+
+      await pub.publish(`signal:${targetNode}`, JSON.stringify(msg));
       break;
     }
 
     case "iceCandidate": {
-      const room = getRoomById(data.details);
-      const receiverId = room?.participants.find(p => p !== userId);
-      const receiver = getUserById(receiverId!);
+      const room = await getRoom(parsed.details);
+      const targetUserId = room.participants.find((p:any) => p !== userId);
+      const targetNode = await getUserNode(targetUserId);
 
-      receiver?.ws.send(
-        JSON.stringify({ type: "iceCandidate", candidate: data.candidate })
-      );
+      const msg = {
+        type: "iceCandidate",
+        candidate: parsed.candidate,
+        from: userId,
+        to: targetUserId
+      };
+
+      await pub.publish(`signal:${targetNode}`, JSON.stringify(msg));
       break;
     }
   }

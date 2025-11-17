@@ -1,23 +1,24 @@
-import { getUserById, removeUser } from "../services/userService";
-import { getRoomByUser, removeRoom } from "../services/roomService";
-import { broadcastUserStatus } from "../utils/broadcast";
+import { localConnections } from "./local";
+import { setUserOffline } from "../services/userService";
+import { removeRoom, getRoomByUser } from "../services/roomService";
+import { pub, redis } from "../config/redis";
 
-export function handleClose(ws: any, userId: string) {
-  const user = getUserById(userId);
-  if (!user) return;
+export async function handleClose(userId: string) {
+  localConnections.delete(userId);
+  await setUserOffline(userId);
 
-  user.isOnline = false;
-  broadcastUserStatus(userId, false);
+  const room = await getRoomByUser(userId);
 
-  removeUser(ws);
-
-  const room = getRoomByUser(userId);
-  if (!room) return;
-
-  const otherId = room.participants.find(p => p !== userId);
-  const otherUser = getUserById(otherId!);
-
-  if (otherUser) otherUser.ws.send(JSON.stringify({ type: "peer-disconnected" }));
-
-  removeRoom(room.roomId);
+  if (room) {
+    for (const pid of room.participants) {
+      if (pid !== userId) {
+        const node = await redis.hGet("user:nodes", pid);
+        pub.publish(`signal:${node}`, JSON.stringify({
+          type: "peer-disconnected",
+          from: userId
+        }));
+      }
+    }
+    await removeRoom(room.roomId);
+  }
 }

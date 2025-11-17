@@ -1,31 +1,36 @@
 import { authenticateUser } from "../config/auth";
-import { addOrUpdateUser, users } from "../services/userService";
+import { addOrUpdateUser, getOnlineUsers } from "../services/userService";
 import { deliverPending } from "../services/pendingService";
 import { broadcastUserStatus } from "../utils/broadcast";
 import { handleMessage } from "./messageHandler";
 import { handleClose } from "./closeHandler";
+import { localConnections } from "./local";
+import { nodeId } from "../index";
 
-export function handleConnection(ws: any, req: any) {
+export async function connectionHandler(ws:any, req:any) {
   const userId = authenticateUser(req.url);
   if (!userId) return ws.close();
 
-  addOrUpdateUser(userId, ws);
+  localConnections.set(userId, ws);
 
-  ws.send(
-    JSON.stringify({
-      type: "online-users",
-      users: users.filter(u => u.isOnline).map(u => u.userId)
-    })
-  );
+  await addOrUpdateUser(userId, nodeId);
 
-  broadcastUserStatus(userId, true);
+  ws.send(JSON.stringify({
+    type: "online-users",
+    users: await getOnlineUsers()
+  }));
 
-  deliverPending(userId, ws);
+  await broadcastUserStatus(userId, true);
 
-  ws.on("message", (msg: any) => {
+  await deliverPending(userId, ws);
+
+  ws.on("message", (msg:any) => {
     const parsed = JSON.parse(msg.toString());
     handleMessage(ws, userId, parsed);
   });
 
-  ws.on("close", () => handleClose(ws, userId));
+  ws.on("close", async () => {
+    await handleClose(userId);
+    await broadcastUserStatus(userId, false);
+  });
 }

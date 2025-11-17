@@ -1,12 +1,12 @@
-import { WebSocket } from "ws";
-import { users } from "../services/userService";
+import { redis } from "../config/redis";
 
-export function broadcastUserStatus(userId: string, isOnline: boolean) {
-  const payload = { type: "user-status", userId, isOnline };
-
-  users.forEach(u => {
-    if (u.isOnline && u.ws.readyState === WebSocket.OPEN) {
-      u.ws.send(JSON.stringify(payload));
-    }
+export async function broadcastUserStatus(userId: string, isOnline: boolean) {
+  const msg = JSON.stringify({
+    type: "user-status",
+    userId,
+    isOnline
   });
+
+  // broadcast across all instances
+  await redis.publish("global:broadcast", msg);
 }

@@ -1,20 +1,13 @@
-export interface PendingMessage {
-  type: string;
-  sdp?: any;
-  candidate?: any;
-  from: string;
+import { redis } from "../config/redis";
+
+export async function storePending(userId: string, message: any) {
+  await redis.rPush(`pending:${userId}`, JSON.stringify(message));
 }
 
-export let pending: Record<string, PendingMessage[]> = {};
+export async function deliverPending(userId: string, ws: any) {
+  const msgs = await redis.lRange(`pending:${userId}`, 0, -1);
 
-export function storePending(userId: string, msg: PendingMessage) {
-  if (!pending[userId]) pending[userId] = [];
-  pending[userId].push(msg);
-}
+  msgs.forEach((m) => ws.send(m));
 
-export function deliverPending(userId: string, ws: any) {
-  if (!pending[userId]) return;
-
-  pending[userId].forEach(m => ws.send(JSON.stringify(m)));
-  delete pending[userId];
+  if (msgs.length) await redis.del(`pending:${userId}`);
 }
