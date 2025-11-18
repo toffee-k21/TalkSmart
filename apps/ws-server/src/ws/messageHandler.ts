@@ -29,8 +29,8 @@ export async function handleMessage(ws:any, userId:any, parsed:any) {
 
 
     case "accept-request": {
-      const receiverId = parsed.receiverId;
       const callerId = parsed.callerId;
+      const receiverId = userId;
 
       const room = await createRoom(callerId, receiverId);
 
@@ -57,7 +57,6 @@ export async function handleMessage(ws:any, userId:any, parsed:any) {
       break;
     }
 
-
     case "createOffer": {
       const { roomId, sdp } = parsed;
 
@@ -65,11 +64,12 @@ export async function handleMessage(ws:any, userId:any, parsed:any) {
       const room = await getRoom(roomId);
       if (!room) return;
 
+      
       // Determine the other peer
       const to = userId === room.callerId
-          ? room.receiverId
-          : room.callerId;
-
+      ? room.receiverId
+      : room.callerId;
+    
       const node = await getUserNode(to);
 
       const msg = {
@@ -96,7 +96,8 @@ export async function handleMessage(ws:any, userId:any, parsed:any) {
       const to = userId === room.callerId
           ? room.receiverId
           : room.callerId;
-
+          
+            console.log("to createAnswer",to);
       const node = await getUserNode(to);
 
       const msg = {

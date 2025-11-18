@@ -21,6 +21,7 @@ export async function getUserNode(userId: string) {
 }
 
 export async function setUserOffline(userId: string) {
+  console.log("setUserOffline userId: ",userId);
   const usr = await getUser(userId);
   if (!usr) return;
 

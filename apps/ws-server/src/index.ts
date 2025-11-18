@@ -24,7 +24,7 @@ async function bootstrap() {
   // Pattern-based subscription (signal routing)
   await subPattern.pSubscribe(`signal:${nodeId}`, (message, channel) => {
     const parsed = JSON.parse(message);
-    console.log("msg ", message);
+    // console.log("msg ", message);
     const ws = localConnections.get(parsed.to);
     if (ws) ws.send(JSON.stringify(parsed));
   });

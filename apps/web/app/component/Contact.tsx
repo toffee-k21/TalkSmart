@@ -4,7 +4,7 @@ import { useSocket } from '../context/SocketContext';
 import {backend_url} from "../utils.json"
 
 const Contact = () => {
-    const [users, setUsers]: any = useState([]);
+    const [users, setUsers] = useState([]);
     const {socket, isConnected}: any = useSocket();
     const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
     console.log("socket",socket);

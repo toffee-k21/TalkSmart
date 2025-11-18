@@ -6,15 +6,16 @@ import { pub, redis } from "../config/redis";
 export async function handleClose(userId: string) {
   // Remove from local WS map
   localConnections.delete(userId);
-
+  
   // Update status in Redis
   await setUserOffline(userId);
-
+  
   // Check if user is inside any room
   const room = await getRoomByUser(userId);
   if (!room) return;
-
+  
   const { callerId, receiverId, roomId } = room;
+  console.log("log.........................:",callerId, receiverId, roomId);
 
   // Find the other user
   const otherUserId = userId === callerId ? receiverId : callerId;

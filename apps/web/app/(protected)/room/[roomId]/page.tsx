@@ -1,151 +1,119 @@
 'use client'
 import React, { useEffect, useRef, useState } from "react";
 import { useSocket } from "../../../context/SocketContext";
-import { useParams, useSearchParams, useRouter } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 
 const Room = () => {
     const searchParams = useSearchParams();
-    const role: string = searchParams.get("role")!;
-    const roomId: any = useParams().roomId;
-    const router = useRouter();
+    const role = searchParams.get("role");          // caller / receiver
+    const roomId = useParams().roomId;
 
-    const { socket, isConnected }: any = useSocket();
-    const [connected, setConnected] = useState(false);
+    const { socket, isConnected } = useSocket();
+    const localVideoRef = useRef(null);
+    const remoteVideoRef = useRef(null);
 
-    const localVideoRef = useRef<HTMLVideoElement>(null);
-    const remoteVideoRef = useRef<HTMLVideoElement>(null);
     const wsRef = useRef<WebSocket | null>(null);
-    const peerRef = useRef<RTCPeerConnection | null>(null);
-    let peerConnection: RTCPeerConnection | null = null;
+    const pcRef = useRef<RTCPeerConnection | null>(null);
 
-    // 🧠 Core: start WebRTC + signaling
-    const startConnection = async (selectedRole: string) => {
-
-        const ws = socket;
-        if (!ws) return console.error("WebSocket not available");
-
-        wsRef.current = ws;
-        console.log("Starting meeting as:", selectedRole);
-
-        // Notify backend that meeting started
-        // ws.send(JSON.stringify({ type: "startMeeting", details: roomId }));
-
-        // Create peer connection
-        const peer = new RTCPeerConnection({
-            iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-        });
-        peerRef.current = peer;
-
-        // Handle ICE candidates
-        peer.onicecandidate = (event) => {
-            if (event.candidate) {
-                ws.send(
-                    JSON.stringify({ type: "iceCandidate", candidate: event.candidate, details: roomId })
-                );
-            }
-        };
-
-        // When remote peer sends media
-        peer.ontrack = (event) => {
-            if (remoteVideoRef.current) {
-                remoteVideoRef.current.srcObject = event.streams[0]!;
-            }
-        };
-
-        // Get user media
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-        stream.getTracks().forEach((track) => peer.addTrack(track, stream));
-
-        // Handle messages (only once)
-        ws.onmessage = async (event: any) => {
-            const message = JSON.parse(event.data);
-            console.log("Received:", message);
-
-            switch (message.type) {
-                case "createOffer":
-                    await handleReceiveOffer(message.sdp);
-                    break;
-                case "createAnswer":
-                    await handleReceiveAnswer(message.sdp);
-                    break;
-                case "iceCandidate":
-                    if (message.candidate) {
-                        await peerRef.current?.addIceCandidate(message.candidate);
-                    }
-                    break;
-                case "peer-disconnected":
-                    alert("Your peer disconnected. Please start again.");
-                    peerRef.current?.close();
-                    setConnected(false);
-                    router.push("/home");
-                    break;
-            }
-        };
-
-        // If sender, create and send offer
-        if (selectedRole === "sender") {
-            const offer = await peer.createOffer();
-            await peer.setLocalDescription(offer);
-            ws.send(JSON.stringify({ type: "createOffer", sdp: offer, details: roomId}));
-        }
-
-        setConnected(true);
-    };
-
-    // 🧩 When we get an offer (receiver)
-    const handleReceiveOffer = async (sdp: any) => {
-        const peer = peerRef.current!;
-        await peer.setRemoteDescription(new RTCSessionDescription(sdp));
-        const answer = await peer.createAnswer();
-        await peer.setLocalDescription(answer);
-        wsRef.current?.send(JSON.stringify({ type: "createAnswer", sdp: answer, details: roomId }));
-    };
-
-    // 🧩 When we get an answer (sender)
-    const handleReceiveAnswer = async (sdp: any) => {
-        const peer = peerRef.current!;
-        await peer.setRemoteDescription(new RTCSessionDescription(sdp));
-    };
-
-    // 🪄 Auto-start connection when socket is ready
+    // ---------------------------
+    // GLOBAL WS LISTENER
+    // ---------------------------
     useEffect(() => {
-        if (!isConnected || !socket || !role || !roomId) return;
+        if (!socket) return;
+        wsRef.current = socket;
 
-        // 🔒 Prevent multiple runs
-        if (peerRef.current) {
-            console.log("Peer already exists, skipping startConnection");
-            return;
-        }
+        socket.onmessage = async (event) => {
+            const msg = JSON.parse(event.data);
+            const pc = pcRef.current;
 
-        startConnection(role);
+            if (!pc) return;
 
-        // 🧹 Cleanup on unmount or dependency change
-        return () => {
-            console.log("Cleaning up WebRTC connection...");
-            if (peerRef.current) {
-                peerRef.current.close();
-                peerRef.current = null;
+            if (msg.type === "createOffer") {
+                await pc.setRemoteDescription(msg.sdp);
+                const answer = await pc.createAnswer();
+                await pc.setLocalDescription(answer);
+
+                wsRef.current?.send(JSON.stringify({
+                    type: "createAnswer",
+                    sdp: answer,
+                    roomId,
+                }));
             }
-            if (wsRef.current) {
-                wsRef.current.onmessage = null;
+
+            if (msg.type === "createAnswer") {
+                await pc.setRemoteDescription(msg.sdp);
+            }
+
+            if (msg.type === "iceCandidate") {
+                if (!msg.candidate) return;
+                await pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
             }
         };
-    }, [isConnected, socket, role, roomId]);
+    }, [socket]);
+
+
+    // ---------------------------
+    // START WEBRTC
+    // ---------------------------
+    useEffect(() => {
+        if (!isConnected || !role || !socket) return;
+
+        const start = async () => {
+            // 1. CREATE PEER
+            const pc = new RTCPeerConnection({
+                iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+            });
+            pcRef.current = pc;
+
+            // 2. ON TRACK
+            pc.ontrack = (e) => {
+                remoteVideoRef.current.srcObject = e.streams[0];
+            };
+
+            // 3. SEND ICE
+            pc.onicecandidate = (ev) => {
+                if (!ev.candidate) return;
+                wsRef.current?.send(JSON.stringify({
+                    type: "iceCandidate",
+                    candidate: ev.candidate.toJSON(),
+                    roomId,
+                }));
+            };
+
+            // 4. LOCAL MEDIA
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            localVideoRef.current.srcObject = stream;
+            stream.getTracks().forEach(t => pc.addTrack(t, stream));
+
+            // 5. OFFER IF CALLER
+            if (role === "caller") {
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+
+                wsRef.current?.send(JSON.stringify({
+                    type: "createOffer",
+                    sdp: offer,
+                    roomId,
+                }));
+            }
+        };
+
+        start();
+
+        return () => pcRef.current?.close();
+    }, [isConnected, role, socket]);
 
 
     return (
-        <div className="flex flex-col items-center p-4 space-y-4">
-            <p className="text-gray-700">
-                {connected ? `Connected as ${role}` : "Connecting..."}
-            </p>
+        <div className="flex flex-col items-center">
+            <p>{role}</p>
 
             <div className="grid grid-cols-2 gap-4">
-                <video ref={localVideoRef} autoPlay playsInline muted className="w-64 h-48 bg-black" />
-                <video ref={remoteVideoRef} autoPlay playsInline className="w-64 h-48 bg-black" />
+                <video ref={localVideoRef} autoPlay playsInline muted />
+                <video ref={remoteVideoRef} autoPlay playsInline />
             </div>
         </div>
-    );
-};
+    )
+}
 
 export default Room;

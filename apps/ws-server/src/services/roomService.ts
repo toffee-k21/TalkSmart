@@ -4,6 +4,7 @@ import { redis } from "../config/redis";
 export async function createRoom(callerId: string, receiverId: string) {
   const roomId = uuid();
   const room = { roomId, callerId, receiverId };
+  console.log("room log",room)
 
   await redis.hSet("rooms", roomId, JSON.stringify(room));
   return room;
