@@ -87,7 +87,7 @@ const Room = () => {
         if (selectedRole === "sender") {
             const offer = await peer.createOffer();
             await peer.setLocalDescription(offer);
-            ws.send(JSON.stringify({ type: "createOffer", sdp: offer, details: roomId }));
+            ws.send(JSON.stringify({ type: "createOffer", sdp: offer, details: roomId}));
         }
 
         setConnected(true);
