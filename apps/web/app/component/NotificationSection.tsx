@@ -1,60 +1,69 @@
-import React, { useEffect, useState } from 'react'
-import { useSocket } from '../context/SocketContext'
-import { useRouter } from 'next/navigation'
+'use client';
+import React, { useEffect, useState } from 'react';
+import { useSocket } from '../context/SocketContext';
+import { useRouter } from 'next/navigation';
 
 const NotificationSection = () => {
-    const { socket, isConnected }: any = useSocket()
-    const [callBy, setCallBy] = useState<string | null>(null)
-    const router = useRouter()
+    const { socket, isConnected, userId }: any = useSocket();
+    // userId must come from your socket context (decoded from JWT)
+
+    const [callerId, setCallerId] = useState<string | null>(null);
+    const router = useRouter();
 
     useEffect(() => {
-        if (!isConnected || !socket) return
+        if (!isConnected || !socket) return;
 
-        // Define handler
         const handleMessage = (event: MessageEvent) => {
-            const message = JSON.parse(event.data)
-            console.log("Received:", message)
+            const message = JSON.parse(event.data);
+            console.log("WS Received:", message);
 
+            // 📞 Incoming call
             if (message.type === "request-call") {
-                alert("A request for call arrived!");
-                console.log("A request for call arrived!",message);
-                setCallBy(message.from)
+                setCallerId(message.callerId);
             }
+
+            // 🎥 Join the room
             if (message.type === "join-room") {
-                console.log("join room",message);
-                const roomId = message.details
-                router.push(`room/${roomId}/?role=${message.role}`)
+                const { roomId, callerId, receiverId } = message;
+
+                // determine my role
+                const role = userId === callerId ? "caller" : "receiver";
+
+                router.push(`/room/${roomId}?role=${role}`);
             }
-        }
+        };
 
-        // Attach listener
-        socket.addEventListener("message", handleMessage)
+        socket.addEventListener("message", handleMessage);
 
-        // Cleanup listener when component unmounts
         return () => {
-            socket.removeEventListener("message", handleMessage)
-        }
-    }, [socket, isConnected, router])
+            socket.removeEventListener("message", handleMessage);
+        };
+    }, [socket, isConnected, router, userId]);
 
-    const handleAcceptRequest = (callBy: string) => {
-        if (!socket) return
-        console.log("clicked", callBy)
-        socket.send(JSON.stringify({ type: "accept-request", participants: [callBy] }))
-    }
 
-    if (!isConnected) return null
+    const handleAcceptRequest = () => {
+        if (!socket || !callerId) return;
+
+        socket.send(JSON.stringify({
+            type: "accept-request",
+            callerId
+        }));
+    };
+
+    if (!isConnected) return null;
 
     return (
         <div>
-            {callBy ? (
+            {callerId ? (
                 <div>
-                    {callBy} - <button onClick={() => handleAcceptRequest(callBy)}>Accept</button>
+                    Incoming call from: {callerId}
+                    <button onClick={handleAcceptRequest}>Accept</button>
                 </div>
             ) : (
                 <div>No notification</div>
             )}
         </div>
-    )
-}
+    );
+};
 
-export default NotificationSection
+export default NotificationSection;

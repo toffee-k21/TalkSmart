@@ -53,8 +53,8 @@ const Contact = () => {
 
     // console.log("ws",ws); // it is comming out to be null
     // const socket = ws?.socket;
-    const handleSendRequest = (userId: string) => {
-        socket.send(JSON.stringify({ type: "request-call", participants:[userId]}));
+    const handleSendRequest = (receiverId: string) => {
+        socket.send(JSON.stringify({ type: "request-call", receiverId}));
     }
 
   return (

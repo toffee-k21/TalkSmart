@@ -4,21 +4,33 @@ import { removeRoom, getRoomByUser } from "../services/roomService";
 import { pub, redis } from "../config/redis";
 
 export async function handleClose(userId: string) {
+  // Remove from local WS map
   localConnections.delete(userId);
+
+  // Update status in Redis
   await setUserOffline(userId);
 
+  // Check if user is inside any room
   const room = await getRoomByUser(userId);
+  if (!room) return;
 
-  if (room) {
-    for (const pid of room.participants) {
-      if (pid !== userId) {
-        const node = await redis.hGet("user:nodes", pid);
-        pub.publish(`signal:${node}`, JSON.stringify({
-          type: "peer-disconnected",
-          from: userId
-        }));
-      }
-    }
-    await removeRoom(room.roomId);
+  const { callerId, receiverId, roomId } = room;
+
+  // Find the other user
+  const otherUserId = userId === callerId ? receiverId : callerId;
+
+  // Find where the other user is connected
+  const otherNode = await redis.hGet("user:nodes", otherUserId);
+
+  if (otherNode) {
+    // Notify the other user
+    await pub.publish(`signal:${otherNode}`, JSON.stringify({
+      type: "peer-disconnected",
+      from: userId,
+      to: otherUserId
+    }));
   }
+
+  // Clean up room from Redis
+  await removeRoom(roomId);
 }

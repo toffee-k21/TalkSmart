@@ -8,7 +8,8 @@ export async function handleMessage(ws:any, userId:any, parsed:any) {
   switch (parsed.type) {
 
     case "request-call": {
-  const { callerId, receiverId } = parsed;
+  const callerId = userId;
+  const receiverId = parsed.receiverId;
 
   const node = await getUserNode(receiverId);
 
@@ -29,7 +30,8 @@ export async function handleMessage(ws:any, userId:any, parsed:any) {
 
 
     case "accept-request": {
-  const { callerId, receiverId } = parsed;
+        const receiverId = userId;
+        const callerId = parsed.callerId;
 
   const room = await createRoom(callerId, receiverId);
 
