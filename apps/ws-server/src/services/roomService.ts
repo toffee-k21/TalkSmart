@@ -4,28 +4,35 @@ import { redis } from "../config/redis";
 export async function createRoom(callerId: string, receiverId: string) {
   const roomId = uuid();
   const room = { roomId, callerId, receiverId };
-  console.log("room log",room)
 
-  await redis.hSet("rooms", roomId, JSON.stringify(room));
+  await redis.set(`room:${roomId}`, JSON.stringify(room));
   return room;
 }
 
+
 export async function getRoom(roomId: string) {
-  const data = await redis.hGet("rooms", roomId);
+  const data = await redis.get(`room:${roomId}`);
   return data ? JSON.parse(data) : null;
 }
 
-export async function getRoomByUser(userId: string) {
-  const all = await redis.hGetAll("rooms");
 
-  for (const r of Object.values(all)) {
-    const room = JSON.parse(r);
-    if (room.callerId === userId || room.receiverId === userId) return room;
+export async function getRoomByUser(userId: string) {
+  const keys = await redis.keys("room:*");
+
+  for (const key of keys) {
+    const data = await redis.get(key);
+    if (!data) continue;
+
+    const room = JSON.parse(data);
+
+    if (room.callerId === userId || room.receiverId === userId) {
+      return room;
+    }
   }
 
   return null;
 }
 
 export async function removeRoom(roomId: string) {
-  await redis.hDel("rooms", roomId);
+  await redis.expire(`room:${roomId}`, 60);
 }

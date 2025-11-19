@@ -88,7 +88,7 @@ const Room = () => {
             // 5. OFFER IF CALLER
             if (role === "caller") {
                 const offer = await pc.createOffer();
-                await pc.setLocalDescription(offer);
+                await pc.setLocalDescription(offer); // this starts icecandidates gathering
 
                 wsRef.current?.send(JSON.stringify({
                     type: "createOffer",

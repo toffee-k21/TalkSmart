@@ -27,7 +27,6 @@ export async function handleMessage(ws:any, userId:any, parsed:any) {
       break;
     }
 
-
     case "accept-request": {
       const callerId = parsed.callerId;
       const receiverId = userId;

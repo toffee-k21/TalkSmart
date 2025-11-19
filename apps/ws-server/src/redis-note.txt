@@ -8,4 +8,4 @@ pending:userId (List)
 
 user:nodes (hash map)
 
-rooms: roomid (hash map)
+room:roomid (set)
