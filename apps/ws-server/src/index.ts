@@ -20,6 +20,7 @@ async function bootstrap() {
   const wss = new WebSocketServer({ port: 5001 });
 
   wss.on("connection", connectionHandler);
+  
 
   // Pattern-based subscription (signal routing)
   await subPattern.pSubscribe(`signal:${nodeId}`, (message, channel) => {

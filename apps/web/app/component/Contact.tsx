@@ -7,13 +7,11 @@ const Contact = () => {
     const [users, setUsers] = useState([]);
     const {socket, isConnected}: any = useSocket();
     const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
-    console.log("socket",socket);
     if(!isConnected) return null;
 
     const handleFetchUsers = async () =>{
         const res = await fetch(`${backend_url}/users/`);
         const usersList = await res.json();
-        console.log("usersList",usersList);
         setUsers(usersList);
     }
 
@@ -44,12 +42,10 @@ const Contact = () => {
                 break;
             }
             case "online-users": {
-                console.log("Currently online:", message.users);
                 setOnlineUsers(message.users);
             }
         }
     };
-    console.log("ou",onlineUsers);
 
     // console.log("ws",ws); // it is comming out to be null
     // const socket = ws?.socket;

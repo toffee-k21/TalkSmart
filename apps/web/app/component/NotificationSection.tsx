@@ -15,7 +15,6 @@ const NotificationSection = () => {
 
         const handleMessage = (event: MessageEvent) => {
             const message = JSON.parse(event.data);
-            console.log("WS Received:", message);
 
             // 📞 Incoming call
             if (message.type === "request-call") {
@@ -25,7 +24,6 @@ const NotificationSection = () => {
             // 🎥 Join the room
             if (message.type === "join-room") {
                 const { roomId, callerId, receiverId } = message;
-                console.log("callerid", callerId, "receiver", receiverId);
 
                 // determine my role
                 const role = userId === callerId ? "caller" : "receiver";

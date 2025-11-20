@@ -11,6 +11,7 @@ const Room = () => {
     const { socket, isConnected } = useSocket();
     const localVideoRef = useRef(null);
     const remoteVideoRef = useRef(null);
+    // const [wsReady, setWsReady] = useState(false);
 
     const wsRef = useRef<WebSocket | null>(null);
     const pcRef = useRef<RTCPeerConnection | null>(null);
@@ -48,15 +49,20 @@ const Room = () => {
                 if (!msg.candidate) return;
                 await pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
             }
+
+
         };
     }, [socket]);
+
+    // console.log("wsReady",wsReady);
 
 
     // ---------------------------
     // START WEBRTC
     // ---------------------------
     useEffect(() => {
-        if (!isConnected || !role || !socket) return;
+        if (!isConnected) return;
+        console.log("ws ready h !", isConnected)
 
         const start = async () => {
             // 1. CREATE PEER
@@ -89,7 +95,6 @@ const Room = () => {
             if (role === "caller") {
                 const offer = await pc.createOffer();
                 await pc.setLocalDescription(offer); // this starts icecandidates gathering
-
                 wsRef.current?.send(JSON.stringify({
                     type: "createOffer",
                     sdp: offer,
@@ -101,7 +106,7 @@ const Room = () => {
         start();
 
         return () => pcRef.current?.close();
-    }, [isConnected, role, socket]);
+    }, [isConnected]);
 
 
     return (

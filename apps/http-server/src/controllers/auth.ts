@@ -40,7 +40,6 @@ export const signupHandler = async (req:Request, res:Response) => {
 
 export const VerifyToken = (req: Request, res:Response) => {
   const token = req.cookies.token;
-  console.log("token",token);
   if (!token) return res.status(401).json({ valid: false });
 
   try {

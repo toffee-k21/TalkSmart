@@ -73,7 +73,6 @@ function broadcastUserStatus(userId: string, isOnline: boolean) {
 }
 
 wss.on("connection", (ws, request) => {
-  console.log(users.filter(u => u.isOnline).map(u => u.userId));
   let userId = null;
   const url = request.url;
   if(!url){
@@ -89,7 +88,6 @@ wss.on("connection", (ws, request) => {
     existingUser.ws = ws;
     existingUser.isOnline = true;
   } else {
-    console.log("uid",userId);
     users.push({ userId, ws, available: true, isOnline: true });
   }
   ws.send(JSON.stringify({

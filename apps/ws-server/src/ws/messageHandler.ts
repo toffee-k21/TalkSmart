@@ -1,6 +1,6 @@
 import { pub } from "../config/redis";
 import { getRoom, createRoom } from "../services/roomService";
-import { storePending } from "../services/pendingService";
+// import { storePending } from "../services/pendingService";
 import { getUserNode } from "../services/userService";
 
 export async function handleMessage(ws:any, userId:any, parsed:any) {
@@ -18,10 +18,6 @@ export async function handleMessage(ws:any, userId:any, parsed:any) {
         receiverId,
         to: receiverId
       };
-
-      if (!node) {
-        return storePending(receiverId, msg);
-      }
 
       await pub.publish(`signal:${node}`, JSON.stringify(msg));
       break;
@@ -69,6 +65,7 @@ export async function handleMessage(ws:any, userId:any, parsed:any) {
       ? room.receiverId
       : room.callerId;
     
+      console.log("to",to);
       const node = await getUserNode(to);
 
       const msg = {
@@ -79,7 +76,7 @@ export async function handleMessage(ws:any, userId:any, parsed:any) {
       };
 
       if (!node) {
-          return storePending(to, msg);
+          // return storePending(to, msg);
       }
 
       await pub.publish(`signal:${node}`, JSON.stringify(msg));
@@ -96,7 +93,6 @@ export async function handleMessage(ws:any, userId:any, parsed:any) {
           ? room.receiverId
           : room.callerId;
           
-            console.log("to createAnswer",to);
       const node = await getUserNode(to);
 
       const msg = {
@@ -107,7 +103,7 @@ export async function handleMessage(ws:any, userId:any, parsed:any) {
       };
 
       if (!node) {
-          return storePending(to, msg);
+          // return storePending(to, msg);
       }
 
       await pub.publish(`signal:${node}`, JSON.stringify(msg));
