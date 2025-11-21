@@ -16,9 +16,6 @@ const Room = () => {
     const wsRef = useRef<WebSocket | null>(null);
     const pcRef = useRef<RTCPeerConnection | null>(null);
 
-    // ---------------------------
-    // GLOBAL WS LISTENER
-    // ---------------------------
     useEffect(() => {
         if (!socket) return;
         wsRef.current = socket;
@@ -50,16 +47,21 @@ const Room = () => {
                 await pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
             }
 
+            if (msg.type === "resend-offer") {
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
 
+                socket.send(JSON.stringify({
+                    type: "createOffer",
+                    roomId,
+                    sdp: offer
+                }));
+            }
         };
     }, [socket]);
 
     // console.log("wsReady",wsReady);
 
-
-    // ---------------------------
-    // START WEBRTC
-    // ---------------------------
     useEffect(() => {
         if (!isConnected) return;
         console.log("ws ready h !", isConnected)
