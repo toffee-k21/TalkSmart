@@ -1,6 +1,6 @@
 import { localConnections } from "./local";
 import { getUserNode, removeUser } from "../services/userService";
-import { removeRoom, getRoomByUser } from "../services/roomService";
+import { removeRoom, getRoomByUser, removeCallerAndReceiverToRoom } from "../services/roomService";
 import { pub, redis } from "../config/redis";
 
 export async function handleClose(userId: string) {
@@ -25,6 +25,7 @@ export async function handleClose(userId: string) {
   if(node) return;
   
   await removeRoom(roomId);
+  await removeCallerAndReceiverToRoom(receiverId, callerId);
   
   // Find where the other user is connected
   // const otherNode = await redis.hGet("user:nodes", otherUserId);

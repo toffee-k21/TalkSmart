@@ -38,12 +38,9 @@ export async function removeRoom(roomId: string) {
   await redis.expire(`room:${roomId}`, 60);
 }
 
-export async function removeCallerToRoom(){
-
-}
-
-export async function removeReceiverToRoom(){
-
+export async function removeCallerAndReceiverToRoom( receiverId:string, callerId:string){
+  await redis.expire(`receiver-to-room:${receiverId}`, 60);
+  await redis.expire(`caller-to-room:${callerId}`, 60);
 }
 
 export async function findRoomWhereUserIsReceiver(receiverId:any) {
