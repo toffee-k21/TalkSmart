@@ -18,7 +18,7 @@ importers:
         specifier: 5.9.2
         version: 5.9.2
 
-  apps/http-server:
+  apps/http-backend:
     dependencies:
       cookie-parser:
         specifier: ^1.4.7
@@ -101,7 +101,7 @@ importers:
         specifier: 5.9.2
         version: 5.9.2
 
-  apps/ws-server:
+  apps/ws-backend:
     dependencies:
       dotenv:
         specifier: ^17.2.3

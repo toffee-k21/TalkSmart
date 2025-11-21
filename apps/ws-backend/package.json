@@ -1,5 +1,5 @@
 {
-  "name": "ws-server",
+  "name": "ws-backend",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",

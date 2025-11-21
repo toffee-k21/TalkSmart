@@ -5,7 +5,7 @@ import authRouter from "./route/auth";
 import cookieParser from "cookie-parser";
 
 const app = express();
-const PORT = 5000;
+const PORT = 4000;
 
 const corsOptions = {
   origin: 'http://localhost:3000',

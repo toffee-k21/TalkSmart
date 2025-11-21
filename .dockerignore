@@ -1,0 +1,25 @@
+# Ignore node_modules everywhere
+node_modules
+
+# Ignore pnpm store
+.pnpm-store
+
+# Ignore logs
+*.log
+npm-debug.log
+
+# Ignore build artifacts
+dist
+build
+
+# Git stuff
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+
+# OS files
+.DS_Store
+Thumbs.db
