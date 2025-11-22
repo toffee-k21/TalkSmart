@@ -1,9 +1,9 @@
-import { prisma } from '@repo/db';
+import { User } from '@repo/db';
 import { Request, Response } from 'express';
 
 export const listUserHandler = async (req:Request, res:Response) =>{
      try {
-       const users = await prisma.user.findMany();
+       const users = await User.find();
         res.status(200).json(users);
       } catch (error) {
         console.error('Error fetching users:', error);

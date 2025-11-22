@@ -1,48 +1,32 @@
-# 1 BUILDER STAGE
-FROM node:20-alpine AS builder
+FROM node:20-alpine AS base
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
 
+# 1️⃣ BUILDER STAGE
+FROM base AS builder
 WORKDIR /app
-
-# Install pnpm globally
-RUN npm install -g pnpm
-
-# ---- Copy workspace-level files from ROOT context ----
-COPY --from=root /package.json ./
-COPY --from=root /pnpm-lock.yaml ./
-COPY --from=root /pnpm-workspace.yaml ./
-
-COPY --from=root /packages/common-backend ./packages/common-backend
-COPY --from=root /packages/typescript-config ./packages/typescript-config
-
-# ---- Copy service package.json ----
-COPY --from=svc /package.json ./apps/ws-backend/package.json
-
-# ---- Install dependencies (pnpm links workspaces → symlinks) ----
+COPY . .
 RUN pnpm install --frozen-lockfile
 
-# ---- Copy the actual service source ----
-COPY --from=svc / ./apps/ws-backend
+# Compile TS -> JS
+RUN pnpm --filter ws-backend run build
 
-# ---- Build (TS → JS) ----
-# IMPORTANT: Use the correct package name from package.json
-RUN pnpm --filter "@repo/ws-backend" run build
+# Isolate production dependencies
+RUN pnpm --filter ws-backend --prod deploy /prod/ws-backend
 
-
-# 2 RUNTIME STAGE
-FROM node:20-alpine AS runner
-
+# 2️⃣ RUNNER STAGE
+FROM base AS runner
 WORKDIR /app
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nodejs
+USER nodejs
 
-RUN npm install -g pnpm
+# Copy the folder that has the FRESH generated client
+COPY --from=builder --chown=nodejs:nodejs /prod/ws-backend /app
 
-# ---- Copy node_modules from builder ----
-COPY --from=builder /app/node_modules ./node_modules
-
-# ---- Copy built JS files ----
-COPY --from=builder /app/apps/ws-backend/dist ./dist
-
-# ---- Copy service package.json for runtime ----
-COPY --from=builder /app/apps/ws-backend/package.json ./package.json
+# Copy the compiled code
+COPY --from=builder --chown=nodejs:nodejs /app/apps/ws-backend/dist ./dist
 
 EXPOSE 5000
 

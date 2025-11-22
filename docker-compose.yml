@@ -1,22 +1,25 @@
+version: '3.8'
+
 services:
-  http-backend:
-    image: moxly-http
+  # Service 1: Your HTTP Backend
+  http_backend:
+    container_name: moxly-http
     build:
       context: .
-      dockerfile: ./docker/Dockerfile.http
-      additional_contexts:
-        root: .
-        svc: ./apps/ws-backend
+      dockerfile: docker/Dockerfile.http
     ports:
       - "4000:4000"
+    env_file:
+      - ./packages/db/.env
+    # restart: always # Optional: Restart if it crashes
 
-  ws-backend:
-    image: moxly-ws
+  # Service 2: Your WebSocket Backend
+  ws_backend:
+    container_name: moxly-ws
     build:
       context: .
-      dockerfile: ./docker/Dockerfile.ws
-      additional_contexts:
-        root: .
-        svc: ./apps/ws-backend
+      dockerfile: docker/Dockerfile.ws
     ports:
       - "5000:5000"
+    env_file:
+      - ./apps/ws-backend/.env

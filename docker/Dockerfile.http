@@ -8,28 +8,29 @@ FROM base AS builder
 WORKDIR /app
 COPY . .
 RUN pnpm install --frozen-lockfile
-
-
-#  prisma client gen
-RUN pnpm --filter db run generate
-
-# Compile TS -> JS
+RUN pnpm --filter db run generate 
 RUN pnpm --filter http-backend run build
 
 # Isolate production dependencies
 RUN pnpm --filter http-backend --prod deploy /prod/http-backend
 
-# 2️⃣ RUNNER STAGE
+# 2️⃣ DEPLOY STAGE (The Fix)
+WORKDIR /prod/http-backend
+
+# ❌ DELETE the "cp -r" line. Do NOT move the schema.
+# ✅ POINT directly to the schema inside the dependency.
+# Because you fixed package.json, this file now GUARANTEED exists.
+# ✅ GOOD: Forces the use of version 6.17.1 to match your dependencies
+RUN pnpm dlx prisma@6.17.1 generate --schema=./node_modules/@repo/db/prisma/schema.prisma
+
+# 3️⃣ RUNNER STAGE
 FROM base AS runner
 WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nodejs
 USER nodejs
 
-# Copy the folder that has the FRESH generated client
 COPY --from=builder --chown=nodejs:nodejs /prod/http-backend /app
-
-# Copy the compiled code
 COPY --from=builder --chown=nodejs:nodejs /app/apps/http-backend/dist ./dist
 
 EXPOSE 4000

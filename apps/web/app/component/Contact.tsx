@@ -57,18 +57,18 @@ const Contact = () => {
     <div>
         online users:
         {users.filter((u:any)=>{
-            return onlineUsers.includes(u.id)
+            return onlineUsers.includes(u._id)
         }).map((e:any)=>{
-           return <div key={e.id}>
-            {e.username} - {e.id}
-                <button onClick={() => handleSendRequest(e.id)}>request call</button>
+           return <div key={e._id}>
+            {e.username} - {e._id}
+                <button onClick={() => handleSendRequest(e._id)}>request call</button>
             </div>
         })}
         offline users:
         {users.filter((u:any) =>{
-        return !onlineUsers.includes(u.id)
+        return !onlineUsers.includes(u._id)
         }).map((u: any) => {
-            return <div key={u.id}>{u.username} - {u.id}
+            return <div key={u._id}>{u.username} - {u._id}
                 {/* <button onClick={() => handleSendRequest(u.id)}>request call</button> */}
             </div>
         })} 
