@@ -1,43 +1,36 @@
-FROM node:20-alpine AS builder
+FROM node:20-alpine AS base
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
 
+# 1️⃣ BUILDER STAGE
+FROM base AS builder
 WORKDIR /app
-
-RUN npm install -g pnpm
-
-
-COPY --from=root /package.json ./
-COPY --from=root /pnpm-lock.yaml ./
-COPY --from=root /pnpm-workspace.yaml ./
-
-COPY --from=root /packages/common-backend ./packages/common-backend
-COPY --from=root /packages/typescript-config ./packages/typescript-config
-COPY --from=root /packages/db ./packages/db
-
-COPY --from=svc /package.json ./apps/http-backend/package.json
-
+COPY . .
 RUN pnpm install --frozen-lockfile
 
-COPY --from=svc / ./apps/http-backend
 
+#  prisma client gen
+RUN pnpm --filter db run generate
+
+# Compile TS -> JS
 RUN pnpm --filter http-backend run build
 
-# 4️⃣ RUNNER STAGE (Smaller Image)
-FROM node:20-alpine AS runner
+# Isolate production dependencies
+RUN pnpm --filter http-backend --prod deploy /prod/http-backend
 
+# 2️⃣ RUNNER STAGE
+FROM base AS runner
 WORKDIR /app
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nodejs
+USER nodejs
 
-RUN npm install -g pnpm
+# Copy the folder that has the FRESH generated client
+COPY --from=builder --chown=nodejs:nodejs /prod/http-backend /app
 
-# ---- Copy node_modules from builder ----
-COPY --from=builder /app/node_modules ./node_modules
-
-# ---- Copy built files (dist) ----
-COPY --from=builder /app/apps/http-backend/dist ./dist
-
-# ---- Copy package.json for runtime ----
-COPY --from=builder /app/apps/http-backend/package.json ./package.json
-
+# Copy the compiled code
+COPY --from=builder --chown=nodejs:nodejs /app/apps/http-backend/dist ./dist
 
 EXPOSE 4000
-
 CMD ["node", "dist/index.js"]

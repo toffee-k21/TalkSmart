@@ -1,0 +1,22 @@
+services:
+  http-backend:
+    image: moxly-http
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile.http
+      additional_contexts:
+        root: .
+        svc: ./apps/ws-backend
+    ports:
+      - "4000:4000"
+
+  ws-backend:
+    image: moxly-ws
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile.ws
+      additional_contexts:
+        root: .
+        svc: ./apps/ws-backend
+    ports:
+      - "5000:5000"

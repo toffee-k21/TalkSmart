@@ -17,7 +17,7 @@ async function bootstrap() {
 
   console.log("✔ All Redis Clients Connected");
 
-  const wss = new WebSocketServer({ port: 5001 });
+  const wss = new WebSocketServer({ port: 5000 });
 
   wss.on("connection", connectionHandler);
   
@@ -38,7 +38,7 @@ async function bootstrap() {
     }
   });
 
-  console.log("WS Server running on ws://localhost:5001");
+  console.log("WS Server running on ws://localhost:5000");
 }
 
 bootstrap().catch(console.error);
