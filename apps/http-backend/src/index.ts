@@ -3,6 +3,11 @@ import cors from 'cors';
 import { listUserHandler } from "./controllers/users";
 import authRouter from "./route/auth";
 import cookieParser from "cookie-parser";
+import { connectDB } from "@repo/db";
+import * as dotenv from 'dotenv';
+dotenv.config();
+
+connectDB(`${process.env.MONGODB_URI}`);
 
 const app = express();
 const PORT = 4000;

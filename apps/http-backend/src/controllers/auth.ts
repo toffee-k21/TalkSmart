@@ -1,22 +1,23 @@
-import { prisma } from '@repo/db';
+import { User } from '@repo/db';
 import { Request, Response } from 'express';
 import { JWT_SECRET } from "@repo/common-backend/config"
 import jwt from "jsonwebtoken";
 
 export const signinHandler = async (req:Request, res:Response) => {
     let user;
-    try {
-        user = await prisma.user.findFirst({
-            where: {
-                email: req.body.email,
-                password: req.body.password,
-            },
-        });
-    } catch (e) {
-        res.json({ error: 'user does not exists', e });
+
+    user = await User.findOne(
+        {
+            email: req.body.email,
+            password: req.body.password,
+        }
+    );
+    if(!user){
+        res.json({ error: 'user does not exists' });
         return;
     }
-    const id = user.id;
+
+    const id = user._id;
 
     const token = jwt.sign({id}, JWT_SECRET);
     res.json(token);
@@ -25,14 +26,16 @@ export const signinHandler = async (req:Request, res:Response) => {
 export const signupHandler = async (req:Request, res:Response) => {
     let user;
     try {
-        user = await prisma.user.create({
-            data: req.body,
+        user = await User.insertOne({
+            username: req.body.username,
+            email: req.body.username,
+            password: req.body.password
         });
     } catch (e) {
         res.json({ error: 'user already exists', e });
         return;
     }
-    const id = user.id;
+    const id = user._id;
 
     const token = jwt.sign({id}, JWT_SECRET);
     res.json(token);
