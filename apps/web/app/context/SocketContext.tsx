@@ -25,6 +25,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     const router = useRouter();
 
     useEffect(() => {
+        console.log("socket context token usage")
         const token = document.cookie
             .split("; ")
             .find((row) => row.startsWith("token="))

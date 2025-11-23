@@ -1,21 +1,21 @@
 version: '3.8'
 
 services:
-  # Service 1: Your HTTP Backend
+  # Service 1
   http_backend:
-    container_name: moxly-http
+    container_name: praxis-http
     build:
       context: .
       dockerfile: docker/Dockerfile.http
     ports:
       - "4000:4000"
     env_file:
-      - ./packages/db/.env
+      - ./packages/http-backend/.env
     # restart: always # Optional: Restart if it crashes
 
-  # Service 2: Your WebSocket Backend
+  # Service 2
   ws_backend:
-    container_name: moxly-ws
+    container_name: praxis-ws
     build:
       context: .
       dockerfile: docker/Dockerfile.ws

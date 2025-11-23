@@ -1,14 +1,18 @@
 "use client";
 
 import { SocketProvider } from "../context/SocketContext";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {backend_url} from "../utils.json";
+import { UserProvider } from "../context/UserContext";
+import { NotificationProvider } from "../context/NotificationContext";
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
+    const [isAuthorized, setIsAuthorized] = useState(false);
 
     const verifyToken = async () => {
+        console.log("verify token");
         try {
             const res = await fetch(`${backend_url}/auth/verifyToken`, {
                 method: "GET",
@@ -21,8 +25,11 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
             }
 
             const data = await res.json();
+            console.log("data.valid :", data.valid);
 
-            if (!data.valid) {
+            if (data.valid) {
+                setIsAuthorized(true);
+            } else {
                 router.push("/auth");
             }
         } catch (err) {
@@ -44,7 +51,17 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
         }
     }, [router]);
 
-    return <SocketProvider>
-        {children}
-    </SocketProvider>;
+    if (!isAuthorized) {
+        return <div className="h-screen w-full flex items-center justify-center">Loading...</div>;
+    }
+
+    return (
+    <SocketProvider>
+        <UserProvider>
+            <NotificationProvider>
+                {children}
+            </NotificationProvider>
+        </UserProvider>
+    </SocketProvider>
+    )
 }

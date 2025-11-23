@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 
 export const signinHandler = async (req:Request, res:Response) => {
     let user;
+    console.log("entered")
 
     user = await User.findOne(
         {
@@ -12,6 +13,7 @@ export const signinHandler = async (req:Request, res:Response) => {
             password: req.body.password,
         }
     );
+    console.log("id", user);
     if(!user){
         res.json({ error: 'user does not exists' });
         return;
@@ -28,11 +30,11 @@ export const signupHandler = async (req:Request, res:Response) => {
     try {
         user = await User.insertOne({
             username: req.body.username,
-            email: req.body.username,
+            email: req.body.email,
             password: req.body.password
         });
     } catch (e) {
-        res.json({ error: 'user already exists', e });
+        res.json({ error: 'user already exists'});
         return;
     }
     const id = user._id;

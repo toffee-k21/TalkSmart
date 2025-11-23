@@ -1,6 +1,6 @@
 "use client"
 import Link from "next/link"
-import { Header } from "./component/Header";
+import Header from "./component/Header";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 

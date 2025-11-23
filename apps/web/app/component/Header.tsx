@@ -5,13 +5,13 @@ interface HeaderProps {
     variant?: "landing" | "app";
 }
 
-export function Header({ variant = "landing" }: HeaderProps) {
+export default function Header({ variant = "landing" }: HeaderProps) {
     return (
         <header className="fixed top-0 left-0 right-0 z-50 bg-[#FAFAFA]/80 backdrop-blur-md border-b border-[#E6E6E6] border-opacity-50">
             <div className="max-w-[1600px] mx-auto px-8 lg:px-16 h-20 flex items-center justify-between">
                 <Link href="/">
                     <div className="text-[0.9375rem] tracking-[0.25em] uppercase font-[200] hover:opacity-60 transition-opacity duration-500">
-                        ASCEND
+                        PRAXIS
                     </div>
                 </Link>
 
