@@ -1,5 +1,5 @@
 {
-  "name": "TalkSmart",
+  "name": "praxis",
   "private": true,
   "scripts": {
     "build": "turbo run build",

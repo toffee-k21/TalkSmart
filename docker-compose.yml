@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   # Service 1
@@ -10,7 +9,7 @@ services:
     ports:
       - "4000:4000"
     env_file:
-      - ./packages/http-backend/.env
+      - ./apps/http-backend/.env
     # restart: always # Optional: Restart if it crashes
 
   # Service 2
