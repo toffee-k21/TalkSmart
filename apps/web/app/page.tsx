@@ -112,7 +112,7 @@ export default function LandingPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
           >
-            <Link href="/auth">
+            <Link href="/home">
               <div className="text-[0.9375rem] font-[300] tracking-[0.03em] text-black border-b border-black pb-1 hover:opacity-50 transition-opacity duration-700">
                 Start Practicing
               </div>

@@ -35,7 +35,7 @@ export default function NotificationItem({ notification, onAccept }: Notificatio
             <div className="flex items-center gap-4">
                 <button
                     onClick={() => onAccept(notification.id)}
-                    className="px-8 py-2 bg-black text-white text-[0.8125rem] font-[300] tracking-[0.05em] uppercase hover:opacity-80 transition-opacity duration-500"
+                    className="px-8 py-2 bg-black text-white text-[0.8125rem] font-[300] tracking-[0.05em] uppercase hover:opacity-80 transition-opacity duration-500 cursor-pointer"
                 >
                     Accept
                 </button>

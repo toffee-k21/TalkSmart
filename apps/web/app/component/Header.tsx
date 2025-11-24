@@ -35,12 +35,12 @@ export default function Header({ variant = "landing" }: HeaderProps) {
                     </nav>
                 ) : (
                     <nav className="flex items-center gap-8">
-                        <Link href="/home">
+                        <Link href="/">
                             <div className="text-[0.875rem] font-[200] tracking-[0.02em] text-[#6B6B6B] hover:text-black transition-colors duration-500">
-                                Home
+                                Back
                             </div>
                         </Link>
-                        <button className="text-[0.875rem] font-[200] tracking-[0.02em] text-[#6B6B6B] hover:text-black transition-colors duration-500">
+                        <button className="text-[0.875rem] font-[200] tracking-[0.02em] text-[#6B6B6B] hover:text-black transition-colors duration-500 cursor-pointer">
                             Sign Out
                         </button>
                     </nav>
