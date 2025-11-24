@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 interface NotificationItemProps {
     notification: {
         id: string;
-        details: any;
+        fromUserDetails: any;
         // from: string;
         // message: string;
         // timestamp: string;
@@ -13,6 +13,7 @@ interface NotificationItemProps {
 }
 
 export default function NotificationItem({ notification, onAccept }: NotificationItemProps) {
+    console.log("notif", notification);
     return (
         <motion.div
             className="py-6 border-b border-[#E6E6E6] last:border-0"
@@ -22,7 +23,7 @@ export default function NotificationItem({ notification, onAccept }: Notificatio
         >
             <div className="mb-4">
                 <p className="text-[0.9375rem] font-[300] tracking-[-0.005em] mb-2">
-                    {notification.details.username}
+                    {notification.fromUserDetails.username}
                 </p>
                 {/* <p className="text-[0.875rem] font-[200] text-[#6B6B6B] leading-relaxed mb-2">
                     {notification.message}

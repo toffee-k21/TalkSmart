@@ -1,10 +1,11 @@
 import { motion } from "framer-motion";
+import { useUsers } from "../context/UserContext";
 
 interface UserTileProps {
     user: {
-        id: string;
-        name: string;
-        role: string;
+        _id: string;
+        username: string;
+        bio: string;
         isOnline: boolean;
     };
     onRequest: (userId: string) => void;
@@ -12,6 +13,7 @@ interface UserTileProps {
 }
 
 export default function UserTile({ user, onRequest, variant = "grid" }: UserTileProps) {
+    const {onlineUsers} = useUsers();
     if (variant === "list") {
         return (
             <motion.div
@@ -21,24 +23,24 @@ export default function UserTile({ user, onRequest, variant = "grid" }: UserTile
                 transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             >
                 <div className="flex items-center gap-4">
-                    {user.isOnline && (
+                    {onlineUsers.includes(user._id) && (
                         <div className="w-2 h-2 bg-[#00D26B] flex-shrink-0" />
                     )}
                     <div>
                         <h4 className="text-[0.9375rem] font-[300] tracking-[-0.005em] mb-1">
-                            {user.name}
+                            {user.username}
                         </h4>
                         <p className="text-[0.8125rem] font-[200] text-[#6B6B6B]">
-                            {user.role}
+                            {user.bio}
                         </p>
                     </div>
                 </div>
-                <button
-                    onClick={() => onRequest(user.id)}
+                {onlineUsers.includes(user._id) ? <button
+                    onClick={() => onRequest(user._id)}
                     className="text-[0.8125rem] font-[300] text-black opacity-0 group-hover:opacity-100 border-b border-black pb-0.5 transition-all duration-500"
                 >
                     Request Call
-                </button>
+                </button> : <></>}
             </motion.div>
         );
     }
@@ -54,10 +56,10 @@ export default function UserTile({ user, onRequest, variant = "grid" }: UserTile
             <div className="flex items-start justify-between mb-6">
                 <div>
                     <h4 className="text-[1rem] font-[300] tracking-[-0.005em] mb-2">
-                        {user.name}
+                        {user.username}
                     </h4>
                     <p className="text-[0.875rem] font-[200] text-[#6B6B6B]">
-                        {user.role}
+                        {user.bio}
                     </p>
                 </div>
                 {user.isOnline && (
@@ -65,7 +67,7 @@ export default function UserTile({ user, onRequest, variant = "grid" }: UserTile
                 )}
             </div>
             <button
-                onClick={() => onRequest(user.id)}
+                onClick={() => onRequest(user._id)}
                 className="text-[0.8125rem] font-[300] text-black border-b border-black pb-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
             >
                 Request Call

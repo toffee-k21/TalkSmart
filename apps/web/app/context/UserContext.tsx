@@ -7,7 +7,7 @@ import { backend_url } from "../utils.json";
 import { useSocket } from "./SocketContext";
 
 const UserContext = createContext<{
-    users: string[];
+    users: any;
     onlineUsers: string[];
 } | null>(null);
 
@@ -27,7 +27,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
     useEffect(()=>{
         if(!isConnected || !socket) return;
-        socket.onmessage = async (event: any) => {
+        const handleMessage = async (event: any) => {
             const message = JSON.parse(event.data);
             // console.log("Received:", message);
 
@@ -54,6 +54,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
                 }
             }
         };
+        socket.addEventListener("message", handleMessage);
     },[socket, isConnected]);
 
     return (
